@@ -1,0 +1,370 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================================
+% CẤU HÌNH GÓI LỆNH (PACKAGES) - TƯƠNG THÍCH OVERLEAF & MIKTEX/TEXLIVE
+% ============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+
+% Căn lề chuẩn báo cáo nghiên cứu trên khổ giấy A4 (Mục tiêu: 6 - 10 trang nội dung)
+\usepackage[a4paper, top=2.2cm, bottom=2.2cm, left=2.2cm, right=2.2cm]{geometry}
+
+% Toán học, bảng biểu, hình ảnh
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% Giãn dòng & khoảng cách đoạn vừa phải theo phong cách research paper
+\linespread{1.12}
+\setlength{\parskip}{4pt}
+
+% ============================================================================
+% MACRO GHI CHÚ DÀN Ý (XÓA HOẶC ĐỔI THÀNH RỖNG KHI VIẾT XONG BÁO CÁO)
+% ============================================================================
+\newcommand{\guideline}[2]{%
+    \begin{center}
+    \fcolorbox{blue!50!black}{blue!4}{%
+        \parbox{0.95\textwidth}{%
+            \small\textbf{\textcolor{blue!60!black}{[GHI CHÚ CẦN VIẾT -- #1]}}\\[3pt]
+            #2
+        }%
+    }
+    \end{center}
+}
+
+\newcommand{\figplaceholder}[2]{%
+    \fcolorbox{gray!70}{gray!8}{%
+        \parbox[c][#1][c]{0.92\textwidth}{%
+            \centering\small\textcolor{gray!50!black}{\textbf{[VỊ TRÍ CHÈN HÌNH ẢNH / SƠ ĐỒ]}\\[4pt] #2}
+        }%
+    }%
+}
+
+% ============================================================================
+% THÔNG TIN TIÊU ĐỀ BÁO CÁO
+% ============================================================================
+\title{%
+    \vspace{-1.0cm}
+    {\normalsize \textbf{CS420 -- NHẬP MÔN TRÍ TUỆ NHÂN TẠO $\mid$ SEMINAR RESEARCH TOPIC [S06]}}\\[8pt]
+    {\LARGE \textbf{Mô hình Khuếch tán (Diffusion Models): Từ Quá trình Thêm nhiễu đến Sinh ảnh Chất lượng cao}}\\[4pt]
+    {\large \textit{(From Adding Noise to Generating Images: Pixel-Space and Latent Diffusion)}}
+}
+
+\author{%
+    \textbf{Thành viên 1 (MSSV)} \quad
+    \textbf{Thành viên 2 (MSSV)} \quad
+    \textbf{Thành viên 3 (MSSV)}\\[4pt]
+    {\small Khoa Công nghệ Thông tin, Trường Đại học Khoa học Tự nhiên, ĐHQG-HCM}\\
+    {\small \texttt{\{email1, email2, email3\}@student.hcmus.edu.vn}}
+}
+
+\date{\small Tháng 11 năm 2026}
+
+% ============================================================================
+% BẮT ĐẦU TÀI LIỆU (GIỚI HẠN 6 - 10 TRANG A4 KHÔNG TÍNH REFERENCES & APPENDIX)
+% ============================================================================
+\begin{document}
+
+\maketitle
+
+% ----------------------------------------------------------------------------
+% TÓM TẮT (ABSTRACT)
+% ----------------------------------------------------------------------------
+\begin{abstract}
+\noindent
+\guideline{Abstract $\mid$ Khoảng 150--200 từ}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=2pt]
+        \item \textbf{Bối cảnh:} Nêu ngắn gọn vai trò của mô hình sinh (Generative AI) và sự trỗi dậy của họ mô hình khuếch tán (Diffusion Models).
+        \item \textbf{Vấn đề \& Câu hỏi cốt lõi:} Làm thế nào việc học khử nhiễu Gauss từng bước giúp sinh ảnh mới (DDPM -- Ho et al., 2020), và cách mô hình khuếch tán tiềm ẩn (LDM -- Rombach et al., 2022) giải bài toán chi phí tính toán.
+        \item \textbf{Thực nghiệm minh họa:} Nêu tóm tắt ví dụ tính toán số 1D, minh họa thêm/khử nhiễu trên ảnh nhỏ và đối chiếu không gian Pixel vs.\ Latent.
+        \item \textbf{Kết luận chính:} Đúc kết sự đánh đổi giữa tốc độ lấy mẫu, chất lượng ảnh và khả năng điều khiển bằng văn bản.
+    \end{itemize}
+}
+\vspace{4pt}
+\noindent\textbf{Từ khóa:} Mô hình khuếch tán, DDPM, Latent Diffusion Models, Khử nhiễu Gauss, Sinh ảnh.
+\end{abstract}
+
+% ============================================================================
+% 1. GIỚI THIỆU (INTRODUCTION)
+% ============================================================================
+\section{Giới thiệu (Introduction)}
+
+\guideline{Mục 1 $\mid$ Độ dài dự kiến: 0.75 -- 1.0 trang $\mid$ Rubric: Problem Statement \& Objectives (5 điểm)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Bối cảnh bài toán:} Giới thiệu bài toán tổng hợp ảnh (image synthesis) trong Trí tuệ Nhân tạo và những hạn chế trước đây về độ ổn định huấn luyện hoặc chi phí tính toán.
+        \item \textbf{Câu hỏi định hướng (Guiding Question -- Bắt buộc theo Mục I):} Phát biểu rõ câu hỏi nghiên cứu trung tâm: \textit{``Làm thế nào việc học cách loại bỏ nhiễu (remove noise) lại giúp mô hình có khả năng sinh ra những bức ảnh hoàn toàn mới?''} kèm câu hỏi phụ: \textit{``Vì sao khuếch tán trong không gian tiềm ẩn (latent diffusion) giảm mạnh yêu cầu tính toán?''}
+        \item \textbf{Mục tiêu \& Phạm vi (Scope):}
+            \begin{enumerate}[leftmargin=1.4em, itemsep=1pt]
+                \item Phân tích cơ sở toán học của quá trình khuếch tán thuận và khử nhiễu ngược trong DDPM \cite{ho2020ddpm}.
+                \item Làm rõ kiến trúc nén hai giai đoạn và cơ chế Cross-Attention trong LDM \cite{rombach2022ldm}.
+                \item Kiểm chứng trực quan qua ví dụ tính tay từng bước và thực nghiệm nhỏ trên dữ liệu ảnh.
+            \end{enumerate}
+        \item \textbf{Cấu trúc báo cáo:} Tóm tắt ngắn gọn nội dung từ Mục 2 đến Mục 5.
+    \end{itemize}
+}
+
+% ============================================================================
+% 2. CƠ SỞ LÝ THUYẾT VÀ TỔNG QUAN TÀI LIỆU (BACKGROUND / PAPER REVIEW)
+% ============================================================================
+\section{Cơ sở lý thuyết và Tổng quan tài liệu (Background / Paper Review)}
+
+\guideline{Mục 2 $\mid$ Độ dài dự kiến: 1.75 -- 2.0 trang $\mid$ Task 1 $\mid$ Rubric: Reading \& Synthesis (15 điểm)}{
+    Diễn đạt bằng văn phong của nhóm (không dịch nguyên văn từ bài báo gốc), tổng hợp và đặt hai bài báo vào bức tranh chung của Generative AI.
+}
+
+\subsection{Mô hình Phân biệt (Discriminative) và Mô hình Sinh (Generative)}
+\guideline{Task 1a}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=2pt]
+        \item Phân biệt rõ bản chất toán học: Mô hình phân biệt học xác suất hậu nghiệm $p(y \mid x)$ (phân loại/hồi quy), trong khi mô hình sinh học phân phối dữ liệu $p(x)$ hoặc $p(x, y)$ để lấy mẫu mới $x_{\text{new}} \sim p_\theta(x)$.
+        \item Nêu ví dụ minh họa ngắn gọn cho từng nhóm.
+    \end{itemize}
+}
+
+\subsection{So sánh định tính các họ Mô hình Sinh chủ đạo}
+\guideline{Task 1b}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt, topsep=2pt]
+        \item So sánh định tính 3 nhánh chính theo yêu cầu đề: \textbf{GANs}, \textbf{Autoregressive Models}, và \textbf{Diffusion Models} (có thể nhắc thêm \textbf{VAEs} làm nền cho phần LDM ở Mục 3.3).
+        \item Thảo luận ngắn gọn ``Bộ ba bất khả thi'' (Generative Learning Trilemma): Chất lượng mẫu cao -- Bao phủ đa dạng mode -- Lấy mẫu nhanh.
+    \end{itemize}
+}
+
+\begin{table}[H]
+\centering
+\caption{So sánh định tính giữa các họ mô hình sinh ảnh tiêu biểu (Task 1).}
+\label{tab:gen_models_comparison}
+\small
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\textbf{Tiêu chí} & \textbf{GANs} & \textbf{Autoregressive} & \textbf{VAEs} & \textbf{Diffusion Models} \\
+\midrule
+Nguyên lý cốt lõi & \textit{[Điền tóm tắt]} & \textit{[Điền tóm tắt]} & \textit{[Điền tóm tắt]} & \textit{[Điền tóm tắt]} \\
+Chất lượng ảnh sinh & \textit{[Cao / ...]} & \textit{[...]} & \textit{[Hơi mờ / ...]} & \textit{[Rất cao]} \\
+Độ ổn định huấn luyện & \textit{[Khó, mode collapse]} & \textit{[Ổn định]} & \textit{[Ổn định]} & \textit{[Ổn định]} \\
+Độ bao phủ phân phối & \textit{[Thấp]} & \textit{[Cao]} & \textit{[Cao]} & \textit{[Cao]} \\
+Tốc độ lấy mẫu & \textit{[Nhanh (1 bước)]} & \textit{[Chậm (tuần tự)]} & \textit{[Nhanh]} & \textit{[Chậm (nhiều bước)]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tổng quan hai bài báo trọng tâm: Từ DDPM đến LDM}
+\guideline{Rubric: Tổng hợp mục tiêu, đóng góp, phương pháp \& mối liên hệ giữa 2 paper}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Bài báo bắt buộc -- DDPM \cite{ho2020ddpm}:} Nêu mục tiêu, 3 đóng góp chính (tham số hóa dự đoán nhiễu $\epsilon_\theta$, hàm mục tiêu đơn giản hóa $L_{\text{simple}}$, cầu nối với Denoising Score Matching), kết quả nổi bật (FID 3.17 trên CIFAR-10), và \textbf{điểm nghẽn} (tốn tài nguyên khi hoạt động trực tiếp trên không gian pixel $\mathbb{R}^{H \times W \times 3}$).
+        \item \textbf{Bài báo khuyến nghị -- LDM \cite{rombach2022ldm}:} Cách LDM kế thừa DDPM nhưng giải quyết điểm nghẽn tính toán bằng cách tách biệt \textit{Nén tri giác (Perceptual Compression)} qua Autoencoder và \textit{Nén ngữ nghĩa (Semantic Compression)} qua khuếch tán trên không gian tiềm ẩn, đồng thời bổ sung cơ chế điều kiện hóa \textbf{Cross-Attention}.
+    \end{itemize}
+}
+
+% ============================================================================
+% 3. PHƯƠNG PHÁP VÀ VÍ DỤ MINH HỌA (METHOD / WORKED EXAMPLE)
+% ============================================================================
+\section{Phương pháp và Ví dụ minh họa (Method / Worked Example)}
+
+\guideline{Mục 3 $\mid$ Độ dài dự kiến: 2.5 -- 3.0 trang $\mid$ Task 2, 3, 5 \& Mục III $\mid$ Rubric: Algorithms \& Equations (15 điểm)}{
+    Trình bày chặt chẽ hệ thống ký hiệu, giả định mô hình, sơ đồ luồng hai chiều, ví dụ tính tay bằng số và kiến trúc LDM.
+}
+
+\subsection{Mô hình DDPM: Quá trình Khuếch tán Thuận và Khử nhiễu Ngược}
+\guideline{Task 2 \& Mục III (Equations to Explain)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Quá trình thuận (Forward Process) \& Lịch $\beta_t$ ($\beta$ schedule):} Giải thích chuỗi Markov cố định thêm nhiễu Gauss qua $T$ bước theo phương trình bắt buộc (1); nêu vai trò của lịch $\beta_1 < \beta_2 < \dots < \beta_T$ và công thức nhảy bước đóng $q(x_t \mid x_0) = \mathcal{N}(\sqrt{\bar{\alpha}_t}x_0, (1-\bar{\alpha}_t)I)$ với $\alpha_t = 1 - \beta_t$, $\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$.
+        \item \textbf{Quá trình ngược (Reverse Process) \& Bộ dự đoán nhiễu (Noise Predictor $\epsilon_\theta$):} Giải thích cách xấp xỉ $p_\theta(x_{t-1} \mid x_t)$ từ điểm xuất phát $x_T \sim \mathcal{N}(0, I)$, kiến trúc mạng U-Net nhận $(x_t, t)$ để dự đoán nhiễu $\epsilon_\theta(x_t, t)$.
+        \item \textbf{Hàm mục tiêu huấn luyện \& Thuật toán lấy mẫu (Sampling):} Giải thích trực quan cách rút gọn giới hạn dưới biến phân (ELBO) về phương trình bắt buộc (2) -- $L_{\text{simple}}$, và trình bày các bước lấy mẫu lặp từ $t = T$ về $1$.
+        \item \textbf{Yêu cầu bắt buộc Mục III:} Định nghĩa \textbf{mọi ký hiệu}, chỉ rõ \textbf{đơn vị / miền giá trị} và \textbf{các giả định mô hình} (Markov property, nhiễu Gauss đẳng hướng độc lập, phương sai ngược cố định $\sigma_t^2$).
+    \end{itemize}
+}
+
+% Hai phương trình bắt buộc từ Mục III của đề bài:
+\begin{equation}
+    q(x_t \mid x_{t-1}) = \mathcal{N}\left(\sqrt{1 - \beta_t}\, x_{t-1},\; \beta_t I\right)
+    \label{eq:forward_step}
+\end{equation}
+
+\begin{equation}
+    L_{\text{simple}} = \mathbb{E}_{t,\, x_0,\, \epsilon}\left[\left\|\epsilon - \epsilon_\theta(x_t, t)\right\|^2\right]
+    \label{eq:l_simple}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Định nghĩa ký hiệu, miền giá trị và giả định trong Phương trình \eqref{eq:forward_step} và \eqref{eq:l_simple} (Mục III).}
+\label{tab:symbols_definition}
+\small
+\begin{tabular}{@{}clp{6.2cm}l@{}}
+\toprule
+\textbf{Ký hiệu} & \textbf{Tên gọi} & \textbf{Ý nghĩa \& Vai trò} & \textbf{Miền giá trị / Đơn vị} \\
+\midrule
+$x_0$ & Dữ liệu gốc & Ảnh sạch ban đầu đã chuẩn hóa cường độ sáng & $[-1, 1]^D$ (không thứ nguyên) \\
+$x_t, x_{t-1}$ & Biến tiềm ẩn nhiễu & Trạng thái ảnh tại bước thời gian $t$ và $t-1$ & $\mathbb{R}^D$ \\
+$t, T$ & Bước thời gian & Chỉ số bước rời rạc và tổng số bước khuếch tán & $t \in \{1, \dots, T\}$ (VD: $T=1000$) \\
+$\beta_t$ & Lịch phương sai & Tỷ lệ phương sai nhiễu bơm thêm ở bước $t$ & $\beta_t \in (0, 1)$ (VD: $10^{-4} \to 0.02$) \\
+$I$ & Ma trận đơn vị & Biểu thị nhiễu Gauss đẳng hướng, độc lập giữa các chiều & $I \in \mathbb{R}^{D \times D}$ \\
+$\epsilon$ & Nhiễu chuẩn thực tế & Vector nhiễu rút mẫu chuẩn dùng để tạo $x_t$ từ $x_0$ & $\epsilon \sim \mathcal{N}(0, I)$ \\
+$\epsilon_\theta(x_t, t)$ & Bộ dự đoán nhiễu & Mạng thần kinh (U-Net) tham số $\theta$ ước lượng $\epsilon$ & $\mathbb{R}^D$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \figplaceholder{3.6cm}{Sơ đồ minh họa hai chiều (Task 2 \& Mục IV):\\
+    Chiều thuận $q(x_t \mid x_{t-1})$ thêm nhiễu từ $x_0 \to x_1 \to \dots \to x_T$ và chiều ngược $p_\theta(x_{t-1} \mid x_t)$ khử nhiễu qua mạng $\epsilon_\theta$ từ $x_T \to x_0$.}
+    \caption{Minh họa quá trình khuếch tán thuận (Forward Noising) và khử nhiễu ngược (Reverse Denoising).}
+    \label{fig:ddpm_forward_reverse}
+\end{figure}
+
+\subsection{Ví dụ tính toán từng bước bằng số (Worked Numerical Example)}
+\guideline{Task 3 \& Mục III -- BẮT BUỘC PHẢI CÓ}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Phần A -- Tính tay 1 bước Forward Noising 1 chiều (Task 3):}
+            \begin{enumerate}[leftmargin=1.4em, itemsep=1pt]
+                \item Chọn giá trị cụ thể cho 1 điểm ảnh vô hướng (1D): ví dụ cường độ pixel gốc $x_0$ (quy từ $[0, 255]$ sang $[-1, 1]$), hệ số $\beta_1$, và một mẫu nhiễu cụ thể $\epsilon$ rút từ $\mathcal{N}(0, 1)$.
+                \item Tính từng bước: hệ số co tín hiệu $\sqrt{1 - \beta_1}$, kỳ vọng có điều kiện $\mu_1 = \sqrt{1 - \beta_1}x_0$, độ lệch chuẩn $\sigma_1 = \sqrt{\beta_1}$, và giá trị sau nhiễu $x_1 = \mu_1 + \sigma_1 \epsilon$.
+                \item \textbf{Diễn giải kỳ vọng ngẫu nhiên (Interpret stochastic expectation):} Giải thích ý nghĩa của $\mathbb{E}[x_1 \mid x_0] = \sqrt{1 - \beta_1}x_0$ (kéo nhẹ trung bình về $0$) và $\text{Var}(x_1 \mid x_0) = \beta_1$ (bảo toàn phương sai tổng thể tiến dần tới phân phối chuẩn tắc $\mathcal{N}(0, 1)$ khi $t \to T$).
+            \end{enumerate}
+        \item \textbf{Phần B -- Tính tường minh giá trị mất mát tức thời trong $L_{\text{simple}}$ (Mục III):}
+            \begin{enumerate}[leftmargin=1.4em, itemsep=1pt]
+                \item Từ cặp $(x_1, t=1)$ ở Phần A, giả sử mạng $\epsilon_\theta(x_1, 1)$ dự đoán một giá trị cụ thể $\hat{\epsilon}$.
+                \item Tính sai số bình phương $\|\epsilon - \hat{\epsilon}\|^2$ và giải thích cách cập nhật gradient giúp $\epsilon_\theta$ học khử nhiễu.
+            \end{enumerate}
+    \end{itemize}
+}
+
+\subsection{Mô hình Khuếch tán Tiềm ẩn (Latent Diffusion Models -- LDM)}
+\guideline{Task 5}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Nén không gian bằng VAE Encoder / Decoder:} Giải thích cách bộ mã hóa $\mathcal{E}$ ánh xạ ảnh $x \in \mathbb{R}^{H \times W \times 3}$ sang biểu diễn tiềm ẩn $z = \mathcal{E}(x) \in \mathbb{R}^{h \times w \times c}$ với hệ số giảm chiều $f = H/h = W/w$ (ví dụ $f = 8$ giảm 64 lần diện tích không gian), và bộ giải mã $\mathcal{D}$ tái tạo ảnh $\tilde{x} = \mathcal{D}(z_0)$.
+        \item \textbf{Các phép toán khuếch tán trong Latent Space:} Viết hàm mục tiêu $L_{\text{LDM}}$ thay $x_t$ bằng $z_t$; giải thích vì sao loại bỏ chi tiết tần số cao không nhìn thấy giúp U-Net tập trung vào cấu trúc ngữ nghĩa và giảm mạnh FLOPs/VRAM.
+        \item \textbf{Cơ chế điều kiện hóa qua Cross-Attention:} Trình bày bộ mã hóa miền $\tau_\theta(y)$ (cho văn bản prompt, nhãn lớp, layout) và công thức $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V$ với $Q$ từ đặc trưng U-Net, $K, V$ từ $\tau_\theta(y)$.
+    \end{itemize}
+}
+
+\begin{figure}[H]
+    \centering
+    \figplaceholder{4.0cm}{Sơ đồ kiến trúc Pipeline LDM (Task 5 \& Mục IV):\\
+    Ảnh Pixel $x \xrightarrow{\mathcal{E}} z_0 \xrightarrow{\text{Forward}} z_T \xrightarrow{\text{Reverse U-Net + Cross-Attention } \tau_\theta(y)} z_0 \xrightarrow{\mathcal{D}} \tilde{x}$.}
+    \caption{Kiến trúc tổng thể của Latent Diffusion Model kết hợp VAE và cơ chế Cross-Attention.}
+    \label{fig:ldm_pipeline}
+\end{figure}
+
+% ============================================================================
+% 4. KẾT QUẢ THỰC NGHIỆM VÀ THẢO LUẬN (RESULTS AND DISCUSSION)
+% ============================================================================
+\section{Kết quả thực nghiệm và Thảo luận (Results and Discussion)}
+
+\guideline{Mục 4 $\mid$ Độ dài dự kiến: 2.5 -- 3.0 trang $\mid$ Task 4, 6 \& Mục IV $\mid$ Rubric: Evidence (10đ) + Critical Analysis (10đ)}{
+    \textbf{Lưu ý quan trọng theo Mục VI của đề:} Phải phân biệt rõ đâu là \textbf{kết quả thực nghiệm minh họa do nhóm tự chạy} (Mục 4.1) và đâu là \textbf{số liệu chuẩn trích dẫn từ bài báo gốc} khi đối chiếu (Mục 4.2).
+}
+
+\subsection{Thực nghiệm minh họa của nhóm: Thêm nhiễu, Khử nhiễu và Nén Tiềm ẩn}
+\guideline{Task 4 \& Mục IV (Minimum Expected Outputs)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Thiết lập thực nghiệm:} Nêu rõ môi trường chạy (CPU/GPU), tập dữ liệu ảnh nhỏ sử dụng (ví dụ MNIST $28 \times 28$ hoặc CIFAR-10 $32 \times 32$), lịch nhiễu ($\beta_1 = 10^{-4} \to \beta_{1000} = 0.02$), và pretrained checkpoint dùng để minh họa sinh ảnh (không cần tự huấn luyện từ đầu).
+        \item \textbf{Thực nghiệm 1 -- Thêm nhiễu ở 5 mức độ (Task 4a -- Bắt buộc):} Trình bày chuỗi ảnh gốc $x_0$ qua đúng 5 mức nhiễu tăng dần (ví dụ $t \in \{50, 150, 300, 600, 1000\}$), nhận xét sự suy giảm cấu trúc thị giác và sự hội tụ về nhiễu chuẩn Gauss.
+        \item \textbf{Thực nghiệm 2 -- Minh họa khử nhiễu / sinh ảnh với Pretrained Model nhỏ (Task 4b):} Trình bày chuỗi ảnh khử nhiễu ngược từ $x_T \to x_0$, phân tích quá trình hình thành bố cục thô ở $t$ lớn và chi tiết sắc nét ở $t$ nhỏ.
+        \item \textbf{Thực nghiệm 3 -- Kiểm chứng tỷ lệ nén VAE (Pixel vs.\ Latent):} Thử nghiệm nén--giải mã 1 ảnh qua pretrained VAE ($f=8$), ghi nhận kích thước tensor giảm từ $H \times W \times 3$ xuống $h \times w \times 4$ kèm chỉ số chất lượng tái tạo (PSNR/SSIM) hoặc thời gian chạy mỗi bước.
+    \end{itemize}
+}
+
+\begin{figure}[H]
+    \centering
+    \figplaceholder{3.4cm}{Chuỗi ảnh minh họa thực nghiệm của nhóm (Task 4 \& Mục IV):\\
+    Hàng 1: Ảnh nhỏ ($28 \times 28$ hoặc $32 \times 32$) gốc và ở 5 mức nhiễu tăng dần.\\
+    Hàng 2: Quá trình khử nhiễu sinh ảnh mới qua mô hình pretrained.}
+    \caption{Kết quả thực nghiệm thêm nhiễu ở 5 mức độ và quá trình khử nhiễu ngược trên mô hình pretrained.}
+    \label{fig:exp_noise_and_generation}
+\end{figure}
+
+\subsection{So sánh Khuếch tán Không gian Pixel và Không gian Tiềm ẩn}
+\guideline{Task 6a \& Mục IV -- Bắt buộc so sánh theo các tiêu chí tường minh (Explicit Criteria)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item Đối chiếu một cấu hình Pixel-space Diffusion cụ thể (ví dụ DDPM/ADM ở độ phân giải $256 \times 256$) với một cấu hình Latent Diffusion cụ thể (ví dụ LDM-4 hoặc LDM-8 ở $256 \times 256$ / $512 \times 512$).
+        \item Phân tích dựa trên số liệu định lượng trích dẫn từ \cite{ho2020ddpm, rombach2022ldm} kết hợp với quan sát thực nghiệm của nhóm: tốc độ lấy mẫu (sampling speed), chất lượng ảnh (FID/IS), chi phí bộ nhớ/tính toán, và khả năng điều khiển bằng câu lệnh văn bản (prompt-based control kết hợp Classifier-Free Guidance).
+    \end{itemize}
+}
+
+\begin{table}[H]
+\centering
+\caption{So sánh cấu hình Pixel-Space Diffusion và Latent Diffusion theo các tiêu chí tường minh (Task 6).}
+\label{tab:pixel_vs_latent}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Tiêu chí đánh giá} & \textbf{Pixel-Space Diffusion (DDPM)} & \textbf{Latent Diffusion (LDM-$f$)} \\
+\midrule
+Không gian vận hành \& Số chiều & Pixel RGB ($H \times W \times 3$) & Latent tensor ($H/f \times W/f \times c$) \\
+Chi phí tính toán \& Bộ nhớ (VRAM) & \textit{[Điền số liệu đối chiếu]} & \textit{[Điền mức giảm chi phí]} \\
+Tốc độ lấy mẫu (Sampling Speed) & \textit{[Điền thông lượng / thời gian]} & \textit{[Nhanh hơn đáng kể]} \\
+Chất lượng ảnh sinh (FID $\downarrow$) & \textit{[Trích dẫn số liệu kèm nguồn]} & \textit{[Trích dẫn số liệu kèm nguồn]} \\
+Điều khiển theo Prompt văn bản & \textit{[Hạn chế / Tốn kém]} & \textit{[Linh hoạt nhờ Cross-Attention]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phân tích phản biện, Rủi ro xã hội và Hạn chế (Critical Analysis \& Limitations)}
+\guideline{Task 6b \& Rubric: Critical Analysis and Limitations (10 điểm)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Hạn chế kỹ thuật \& Điều kiện áp dụng:}
+            \begin{enumerate}[leftmargin=1.4em, itemsep=1pt]
+                \item Tốc độ lấy mẫu vẫn phụ thuộc chuỗi lặp tuần tự (dù đã sang latent space, vẫn cần các bộ lấy mẫu nhanh như DDIM để giảm từ 1000 xuống 20--50 bước).
+                \item Giới hạn của nút cổ chai VAE (autoencoder bottleneck): khi hệ số nén $f$ quá lớn hoặc ảnh có chi tiết vi mô dày đặc (chữ viết nhỏ, bàn tay, khuôn mặt kích thước nhỏ), chất lượng bị giới hạn bởi khả năng tái tạo của giai đoạn 1.
+            \end{enumerate}
+        \item \textbf{Hạn chế về Dữ liệu, Bản quyền và Thiên kiến (Bắt buộc theo Task 6):}
+            \begin{enumerate}[leftmargin=1.4em, itemsep=1pt]
+                \item \textit{Dữ liệu huấn luyện (Training data):} Sự phụ thuộc vào các bộ dữ liệu thu thập quy mô lớn từ Internet (như LAION-400M/5B) tiềm ẩn nhiễu nhãn và nội dung nhạy cảm.
+                \item \textit{Bản quyền (Copyright):} Nguy cơ ghi nhớ (memorization) dữ liệu huấn luyện hoặc bắt chước phong cách cá nhân của nghệ sĩ mà chưa có sự đồng thuận.
+                \item \textit{Thiên kiến (Bias):} Khuếch đại định kiến xã hội, giới tính, chủng tộc và văn hóa sẵn có trong phân phối dữ liệu gốc khi sinh ảnh từ prompt.
+            \end{enumerate}
+        \item \textbf{Giới hạn của thực nghiệm nhóm (Rubric lưu ý):} Nêu rõ các thực nghiệm nhỏ trong báo cáo đóng vai trò minh họa cơ chế toán học và chi phí không gian trạng thái, không dùng để khái quát hóa quá mức thay cho các benchmark quy mô lớn.
+    \end{itemize}
+}
+
+% ============================================================================
+% 5. KẾT LUẬN (CONCLUSION)
+% ============================================================================
+\section{Kết luận (Conclusion)}
+
+\guideline{Mục 5 $\mid$ Độ dài dự kiến: 0.5 trang}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item Trả lời trực diện và cô đọng cho \textbf{Guiding Question} đã đặt ra ở Mục 1.
+        \item Tổng kết bước chuyển hóa từ DDPM (nền tảng xác suất \& dự đoán nhiễu) sang LDM (nén tri giác \& điều khiển đa phương thức), đặt nền móng cho các hệ thống sinh ảnh hiện đại.
+        \item Nêu ngắn gọn 2--3 hướng phát triển tiếp theo (ví dụ: tăng tốc lấy mẫu một/vài bước với Consistency Models/Distillation, hoặc thay U-Net bằng kiến trúc Diffusion Transformers -- DiT).
+    \end{itemize}
+}
+
+% ============================================================================
+% TÀI LIỆU THAM KHẢO (REFERENCES - KHÔNG TÍNH VÀO GIỚI HẠN 6-10 TRANG)
+% ============================================================================
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{ho2020ddpm}
+J.~Ho, A.~Jain, and P.~Abbeel, ``Denoising Diffusion Probabilistic Models,'' in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~33, pp.~6840--6851, 2020.
+
+\bibitem{rombach2022ldm}
+R.~Rombach, A.~Blattmann, D.~Lorenz, P.~Esser, and B.~Ommer, ``High-Resolution Image Synthesis with Latent Diffusion Models,'' in \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.~10684--10695, 2022.
+
+\bibitem{placeholder_refs}
+\textit{[Ghi chú: Bổ sung thêm các trích dẫn nền tảng khi viết Mục 2 \& 4 (VD: Goodfellow et al.\ 2014 cho GAN, Kingma \& Welling 2013 cho VAE, Sohl-Dickstein et al.\ 2015 cho Thermodynamic Diffusion, Song \& Ermon 2019 cho Score Matching, cùng trích dẫn cho Dataset và thư viện Pretrained Models sử dụng).]}
+
+\end{thebibliography}
+
+% ============================================================================
+% PHỤ LỤC (APPENDIX - TÙY CHỌN, KHÔNG TÍNH VÀO GIỚI HẠN 6-10 TRANG)
+% ============================================================================
+\appendix
+\section{Khai báo Công cụ Hỗ trợ và Nguồn Tài nguyên}
+\guideline{Phụ lục $\mid$ Đáp ứng yêu cầu cuối Mục VI (Trang 3 đề bài)}{
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Khai báo sử dụng công cụ AI:} Liệt kê minh bạch các công cụ AI đã hỗ trợ (ví dụ: hỗ trợ gợi ý dàn ý, kiểm tra lỗi chính tả/LaTeX, gợi ý mã nguồn vẽ biểu đồ) và xác nhận nhóm đã tự kiểm chứng độc lập toàn bộ công thức, số liệu và trích dẫn.
+        \item \textbf{Liên kết mã nguồn thực nghiệm:} Dẫn link tới repository hoặc mô tả cách tái lập các hình vẽ trong Mục 4.
+    \end{itemize}
+}
+
+\end{document}
