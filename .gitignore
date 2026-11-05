@@ -5,3 +5,6 @@ result_tmp
 figures
 experiments/data
 __pycache__/
+
+.vscode/
+.venv*
