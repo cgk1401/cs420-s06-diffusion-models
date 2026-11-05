@@ -1,16 +1,22 @@
+"""
+Central configuration for CS420 Seminar [S06] Diffusion Models Experiments.
+Ensures 100% reproducibility across the 1D worked example (Section 3.2)
+and the 28x28 Pixel-Space DDPM vs. Latent-Space LDM experiments (Section 4).
+"""
+
 from pathlib import Path
 
 # Base paths
 EXPERIMENTS_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = EXPERIMENTS_DIR.parent
-
+SAMPLE_IMAGE_PATH = PROJECT_ROOT / "papers" / "3.png"
 
 OUTPUTS_DIR = EXPERIMENTS_DIR / "outputs"
 FIGURES_DIR = OUTPUTS_DIR / "figures"
-
+TABLES_DIR = OUTPUTS_DIR / "tables"
 CHECKPOINTS_DIR = OUTPUTS_DIR / "checkpoints"
 
-for _d in (OUTPUTS_DIR, FIGURES_DIR, CHECKPOINTS_DIR):
+for _d in (OUTPUTS_DIR, FIGURES_DIR, TABLES_DIR, CHECKPOINTS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 # Global random seed for complete reproducibility
@@ -34,4 +40,3 @@ FORWARD_LABELS_5 = ["t = 50", "t = 200", "t = 400", "t = 700", "t = 1000"]
 # Reverse denoising observation steps for Task 4b
 REVERSE_STEPS_SHOW = [999, 699, 399, 199, 49, 0]
 REVERSE_LABELS_SHOW = ["t = 1000", "t = 700", "t = 400", "t = 200", "t = 50", "t = 0"]
-
