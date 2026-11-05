@@ -14,11 +14,11 @@
   - *Mandatory Specification (Section III):* Define *every symbol*, specify units/value ranges, and state modeling assumptions (@tab:symbols).
 ]
 
-=== 1. Theoretical Framework & Modeling Assumptions
+=== Theoretical Framework & Modeling Assumptions
 
 Denoising Diffusion Probabilistic Models (DDPM) define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free *forward diffusion process* that systematically degrades data into isotropic Gaussian noise, and a parameterized *reverse process* that learns to invert this degradation to synthesize novel samples.
 
-==== Data Scaling & Preprocessing Assumptions
+=== Data Scaling & Preprocessing Assumptions
 
 Image data consisting of discrete pixel intensities $x_"raw" in {0, 1, ..., 255}^D$ (where $D = H times W times C$) is scaled linearly to the continuous interval $[-1, 1]^D$:
 
@@ -26,7 +26,7 @@ $ x_0 = (x_"raw") / 127.5 - 1 $
 
 This normalization ensures that the input signal $x_0$ is centered at zero with coordinate-wise variance consistent with the standard Gaussian prior $p(x_T) = cal(N)(bold(0), bold(I))$, preventing numerical instabilities during neural network processing.
 
-==== Forward Process & $beta$ Schedule
+=== Forward Process & $beta$ Schedule
 
 The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to a variance schedule $beta_1, ..., beta_T$:
 
@@ -44,7 +44,7 @@ $ x_t (x_0, epsilon) = sqrt(overline(alpha)_t) x_0 + sqrt(1 - overline(alpha)_t)
 
 As $t -> T$, $overline(alpha)_T -> 0$, causing the signal $x_0$ to vanish completely so that $x_T approx cal(N)(bold(0), bold(I))$.
 
-==== Reverse Process, Noise Predictor & Sampling
+=== Reverse Process, Noise Predictor & Sampling
 
 The reverse process $p_theta (x_(0:T))$ is a learned Markov chain starting from a standard Gaussian prior $p(x_T) = cal(N)(x_T; bold(0), bold(I))$. It is parameterized by a U-Net neural network with parameters $theta$:
 
@@ -88,13 +88,9 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
 ] <tab:symbols>
 
 #figure(
+  image("../figures/fig1_ddpm_chain.pdf", width: 100%),
   caption: [Illustration of the forward noising process $q(x_t | x_(t-1))$ and reverse denoising process $p_theta (x_(t-1) | x_t)$ (Task 2).],
-)[
-  #fig-placeholder([
-    Draw bidirectional diagram (Task 2 & Section IV): \
-    Forward direction $x_0 -> x_1 -> ... -> x_T$ (adding Gaussian noise) and Reverse direction $x_T -> x_0$ (denoising via $epsilon_theta$).
-  ], height: 3.2cm)
-] <fig:ddpm-chain>
+) <fig:ddpm-chain>
 
 == Step-by-Step Worked Numerical Example
 
@@ -115,11 +111,157 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
   - *Cross-Attention Conditioning:* Explain domain encoder $tau_theta (y)$ and $"Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V$ for text/layout prompts.
 ]
 
+=== VAE Encoder / Decoder & Perceptual Compression
+
+To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling.
+
+1. *Perceptual Spatial Compression ($z = cal(E)(x)$):* \
+   An autoencoder consisting of an encoder $cal(E)$ compresses an RGB pixel image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$:
+   $ z = cal(E)(x) $
+   The spatial dimensions are downsampled by a factor $f = H / h = W / w = 2^m$ (where $m in bb(N)$). LDM explores downsampling factors $f in \{1, 2, 4, 8, 16, 32\}$. For instance, an $f = 8$ compression factor reduces a $256 times 256 times 3$ pixel image to a $32 times 32 times 4$ latent tensor, discarding high-frequency imperceptible details while preserving essential structural semantics.
+
+2. *Perceptual Reconstruction ($tilde(x) = cal(D)(z_0)$):* \
+   A decoder $cal(D)$ learns to map the denoised latent representation $z_0$ back to the original image space:
+   $ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $
+   To prevent high-variance latent spaces during autoencoder training, two regularization variants are utilized:
+   - *KL-reg:* Imposes a mild KL-penalty towards a standard normal distribution on the learned latent space, similar to a Variational Autoencoder.
+   - *VQ-reg:* Incorporates a vector quantization layer within the decoder, acting as a VQ-GAN latent space. \
+   Combined with perceptual loss terms (LPIPS) and patch-based adversarial losses, the autoencoder ensures that $tilde(x)$ maintains high visual fidelity without blurriness.
+
+=== Diffusion Operations in Latent Space & Computational Efficiency
+
+By shifting the generative diffusion process into the lower-dimensional latent space $bb(R)^(h times w times c)$, LDM executes all forward noising and reverse denoising transitions on latent vectors $z_t$.
+
+1. *Forward Latent Diffusion:* \
+   $ q(z_(1:T) | z_0) = product_(t=1)^T q(z_t | z_(t-1)), quad q(z_t | z_0) = cal(N)(z_t; sqrt(overline(alpha)_t) z_0, (1 - overline(alpha)_t) bold(I)) $
+   Arbitrary latent state sampling follows the closed form $z_t (z_0, epsilon) = sqrt(overline(alpha)_t) z_0 + sqrt(1 - overline(alpha)_t) epsilon$, where $epsilon ~ cal(N)(bold(0), bold(I))$.
+
+2. *Reverse Latent Diffusion & Objective Function:* \
+   The U-Net neural network $epsilon_theta (z_t, t, tau_theta (y))$ predicts the noise vector $epsilon$ injected into the latent space:
+   $ L_"LDM" = bb(E)_(cal(E)(x), y, epsilon, t) [ norm(epsilon - epsilon_theta (z_t, t, tau_theta (y)))^2 ] $ <eq:lldm>
+
+3. *Substantial Computational Savings:*
+   - *Spatial Token Reduction:* Compressing image resolution by factor $f$ reduces spatial dimension size by $f^2$. For $f = 8$, the spatial token sequence length drops by a factor of $64$ (e.g., from $256^2 = 65,536$ pixels to $32^2 = 1,024$ latent tokens).
+   - *Resource Efficiency:* Operating on $z_t$ lowers memory footprint and computational FLOPs for U-Net self-attention blocks, accelerating training convergence and boosting sampling throughput by $3 times$ to $10 times$ compared to pixel-space DDPM.
+
+=== Cross-Attention Conditioning Mechanism
+
+To transform diffusion models into versatile, multi-modal conditional generators, LDM integrates a flexible Cross-Attention mechanism into the U-Net backbone.
+
+1. *Domain-Specific Encoder ($tau_theta (y)$):* \
+   Conditioning inputs $y$ (such as text prompts, layout bounding boxes, semantic segmentation maps, or target images) are processed by a specialized domain encoder $tau_theta (y) in bb(R)^(M times d_tau)$ that maps $y$ into an intermediate representation vector of sequence length $M$ and dimension $d_tau$ (e.g., a Transformer/BERT encoder for text).
+
+2. *Cross-Attention Formulation:* \
+   Let $phi_i (z_t) in bb(R)^(N times d_epsilon^i)$ denote the flattened intermediate spatial feature map of the U-Net at layer $i$, where $N = h_i times w_i$. The cross-attention layer projects features into Query, Key, and Value matrices:
+   $ Q = W_Q^((i)) dot phi_i (z_t) in bb(R)^(N times d), quad K = W_K^((i)) dot tau_theta (y) in bb(R)^(M times d), quad V = W_V^((i)) dot tau_theta (y) in bb(R)^(M times d) $
+   The attention weights and output feature updates are computed as:
+   $ "Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V $ <eq:crossattn>
+   where $W_Q^((i)) in bb(R)^(d times d_epsilon^i)$, $W_K^((i)) in bb(R)^(d times d_tau)$, and $W_V^((i)) in bb(R)^(d times d_tau)$ are learnable projection weight matrices, and $d$ is the projection channel dimension.
+
+3. *Multi-Modal Interaction:* \
+   The matrix product $Q K^T in bb(R)^(N times M)$ evaluates pairwise affinity between each spatial location in the U-Net ($N$) and each conditioning token ($M$), enabling precise spatial alignment and semantic control (e.g., placing objects described in text at specific spatial regions).
+
+=== Overall Pipeline Diagram of Latent Diffusion Models
+
 #figure(
   caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5).],
 )[
-  #fig-placeholder([
-    Draw LDM architecture pipeline (Task 5 & Section IV): \
-    Pixel Image $x ->$ VAE Encoder $cal(E) ->$ Latent Diffusion ($z_0 <-> z_T$, U-Net + Cross-Attention $tau_theta (y)$) $->$ VAE Decoder $cal(D) -> tilde(x)$.
-  ], height: 3.6cm)
+  #rect(width: 100%, stroke: 0.6pt + luma(120), inset: 10pt, radius: 4pt, fill: luma(250))[
+    #set text(size: 8.2pt)
+    #grid(
+      columns: (1fr),
+      gutter: 8pt,
+      [
+        #align(center)[
+          *1. Perceptual Compression & Reconstruction (Pixel <-> Latent)*
+        ]
+        #v(2pt)
+        #grid(
+          columns: (1.1fr, auto, 1.2fr, auto, 1.1fr),
+          align: center + horizon,
+          gutter: 4pt,
+          [
+            #rect(fill: rgb("e8f4f8"), stroke: 0.8pt + rgb("2b7bba"), radius: 3pt, inset: 5pt)[
+              *Pixel Image $x$* \
+              $H times W times 3$
+            ]
+          ],
+          [
+            #text(size: 10pt, fill: rgb("2b7bba"))[$-->$] \
+            #text(size: 6.5pt, fill: rgb("2b7bba"))[Encoder $cal(E)$]
+          ],
+          [
+            #rect(fill: rgb("fff8e7"), stroke: 0.8pt + rgb("d35400"), radius: 3pt, inset: 5pt)[
+              *Latent Code $z_0$* \
+              $h times w times c$ \
+              #text(size: 6.5pt, fill: luma(100))[(Factor $f = H/h$)]
+            ]
+          ],
+          [
+            #text(size: 10pt, fill: rgb("27ae60"))[$-->$] \
+            #text(size: 6.5pt, fill: rgb("27ae60"))[Decoder $cal(D)$]
+          ],
+          [
+            #rect(fill: rgb("e8f8f5"), stroke: 0.8pt + rgb("27ae60"), radius: 3pt, inset: 5pt)[
+              *Reconstructed $tilde(x)$* \
+              $H times W times 3$
+            ]
+          ]
+        )
+      ],
+      [
+        #line(length: 100%, stroke: 0.4pt + luma(180))
+      ],
+      [
+        #align(center)[
+          *2. Latent Diffusion Process & Cross-Attention Conditioning*
+        ]
+        #v(2pt)
+        #grid(
+          columns: (1fr, auto, 1.3fr, auto, 1fr),
+          align: center + horizon,
+          gutter: 4pt,
+          [
+            #rect(fill: rgb("fff8e7"), stroke: 0.8pt + rgb("d35400"), radius: 3pt, inset: 5pt)[
+              *Latent $z_0$* \
+              $cal(E)(x)$
+            ]
+          ],
+          [
+            #text(size: 9pt, fill: rgb("c0392b"))[$<-->$] \
+            #text(size: 6.5pt, fill: rgb("c0392b"))[Diffusion $q / p_theta$]
+          ],
+          [
+            #rect(fill: rgb("f3e5f5"), stroke: 0.8pt + rgb("8e44ad"), radius: 3pt, inset: 6pt)[
+              *Denoising U-Net $epsilon_theta (z_t, t, tau_theta (y))$* \
+              #v(2pt)
+              #rect(fill: rgb("ffffff"), stroke: 0.5pt + rgb("8e44ad"), radius: 2pt, inset: 3pt)[
+                *Cross-Attention Layer* \
+                $Q = W_Q phi_i (z_t), quad K = W_K tau_theta (y), quad V = W_V tau_theta (y)$ \
+                $"Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V$
+              ]
+            ]
+          ],
+          [
+            #text(size: 9pt, fill: rgb("8e44ad"))[$<--$] \
+            #text(size: 6.5pt, fill: rgb("8e44ad"))[$K, V$ Tokens]
+          ],
+          [
+            #rect(fill: rgb("fef9e7"), stroke: 0.8pt + rgb("f39c12"), radius: 3pt, inset: 5pt)[
+              *Conditioning $y$* \
+              Text / Layout / Maps \
+              #v(2pt)
+              #text(size: 6.5pt)[Encoder $tau_theta (y)$]
+            ]
+          ]
+        )
+      ]
+    )
+    #v(4pt)
+    #align(center)[
+      #text(size: 7.5pt, style: "italic", fill: luma(80))[
+        Full LDM Pipeline: Image $x$ is compressed into latent space $z_0 = cal(E)(x)$. Diffusion runs in latent space on $z_t$. Conditioning $y$ is encoded by $tau_theta (y)$ and injected via Cross-Attention layers inside the UNet $epsilon_theta$. Denoised $z_0$ is decoded back to pixel space $tilde(x) = cal(D)(z_0)$.
+      ]
+    ]
+  ]
 ] <fig:ldm-pipeline>
