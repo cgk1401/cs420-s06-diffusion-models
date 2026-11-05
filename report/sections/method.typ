@@ -42,13 +42,9 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
 ] <tab:symbols>
 
 #figure(
+  image("../figures/fig1_ddpm_chain.pdf", width: 100%),
   caption: [Illustration of the forward noising process $q(x_t | x_(t-1))$ and reverse denoising process $p_theta (x_(t-1) | x_t)$ (Task 2).],
-)[
-  #fig-placeholder([
-    Draw bidirectional diagram (Task 2 & Section IV): \
-    Forward direction $x_0 -> x_1 -> dots.c -> x_T$ (adding Gaussian noise) and Reverse direction $x_T -> x_0$ (denoising via $epsilon_theta$).
-  ], height: 3.2cm)
-] <fig:ddpm-chain>
+) <fig:ddpm-chain>
 
 == Step-by-Step Worked Numerical Example
 
