@@ -14,11 +14,11 @@
   - *Mandatory Specification (Section III):* Define *every symbol*, specify units/value ranges, and state modeling assumptions (@tab:symbols).
 ]
 
-=== 1. Theoretical Framework & Modeling Assumptions
+=== Theoretical Framework & Modeling Assumptions
 
 Denoising Diffusion Probabilistic Models (DDPM) define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free *forward diffusion process* that systematically degrades data into isotropic Gaussian noise, and a parameterized *reverse process* that learns to invert this degradation to synthesize novel samples.
 
-==== Data Scaling & Preprocessing Assumptions
+=== Data Scaling & Preprocessing Assumptions
 
 Image data consisting of discrete pixel intensities $x_"raw" in {0, 1, ..., 255}^D$ (where $D = H times W times C$) is scaled linearly to the continuous interval $[-1, 1]^D$:
 
@@ -26,7 +26,7 @@ $ x_0 = (x_"raw") / 127.5 - 1 $
 
 This normalization ensures that the input signal $x_0$ is centered at zero with coordinate-wise variance consistent with the standard Gaussian prior $p(x_T) = cal(N)(bold(0), bold(I))$, preventing numerical instabilities during neural network processing.
 
-==== Forward Process & $beta$ Schedule
+=== Forward Process & $beta$ Schedule
 
 The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to a variance schedule $beta_1, ..., beta_T$:
 
@@ -44,7 +44,7 @@ $ x_t (x_0, epsilon) = sqrt(overline(alpha)_t) x_0 + sqrt(1 - overline(alpha)_t)
 
 As $t -> T$, $overline(alpha)_T -> 0$, causing the signal $x_0$ to vanish completely so that $x_T approx cal(N)(bold(0), bold(I))$.
 
-==== Reverse Process, Noise Predictor & Sampling
+=== Reverse Process, Noise Predictor & Sampling
 
 The reverse process $p_theta (x_(0:T))$ is a learned Markov chain starting from a standard Gaussian prior $p(x_T) = cal(N)(x_T; bold(0), bold(I))$. It is parameterized by a U-Net neural network with parameters $theta$:
 
@@ -111,7 +111,7 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
   - *Cross-Attention Conditioning:* Explain domain encoder $tau_theta (y)$ and $"Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V$ for text/layout prompts.
 ]
 
-=== 1. VAE Encoder / Decoder & Perceptual Compression
+=== VAE Encoder / Decoder & Perceptual Compression
 
 To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling.
 
@@ -128,7 +128,7 @@ To overcome the severe computational bottlenecks of pixel-space diffusion models
    - *VQ-reg:* Incorporates a vector quantization layer within the decoder, acting as a VQ-GAN latent space. \
    Combined with perceptual loss terms (LPIPS) and patch-based adversarial losses, the autoencoder ensures that $tilde(x)$ maintains high visual fidelity without blurriness.
 
-=== 2. Diffusion Operations in Latent Space & Computational Efficiency
+=== Diffusion Operations in Latent Space & Computational Efficiency
 
 By shifting the generative diffusion process into the lower-dimensional latent space $bb(R)^(h times w times c)$, LDM executes all forward noising and reverse denoising transitions on latent vectors $z_t$.
 
@@ -144,7 +144,7 @@ By shifting the generative diffusion process into the lower-dimensional latent s
    - *Spatial Token Reduction:* Compressing image resolution by factor $f$ reduces spatial dimension size by $f^2$. For $f = 8$, the spatial token sequence length drops by a factor of $64$ (e.g., from $256^2 = 65,536$ pixels to $32^2 = 1,024$ latent tokens).
    - *Resource Efficiency:* Operating on $z_t$ lowers memory footprint and computational FLOPs for U-Net self-attention blocks, accelerating training convergence and boosting sampling throughput by $3 times$ to $10 times$ compared to pixel-space DDPM.
 
-=== 3. Cross-Attention Conditioning Mechanism
+=== Cross-Attention Conditioning Mechanism
 
 To transform diffusion models into versatile, multi-modal conditional generators, LDM integrates a flexible Cross-Attention mechanism into the U-Net backbone.
 
@@ -161,7 +161,7 @@ To transform diffusion models into versatile, multi-modal conditional generators
 3. *Multi-Modal Interaction:* \
    The matrix product $Q K^T in bb(R)^(N times M)$ evaluates pairwise affinity between each spatial location in the U-Net ($N$) and each conditioning token ($M$), enabling precise spatial alignment and semantic control (e.g., placing objects described in text at specific spatial regions).
 
-=== 4. Overall Pipeline Diagram of Latent Diffusion Models
+=== Overall Pipeline Diagram of Latent Diffusion Models
 
 #figure(
   caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5).],
