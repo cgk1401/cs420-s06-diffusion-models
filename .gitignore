@@ -1,3 +1,7 @@
 papers/3.png
 papers/forward_reverse_noise.ipynb
 experiments/README.md
+result_tmp
+figures
+experiments/data
+__pycache__/
