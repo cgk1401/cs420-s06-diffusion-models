@@ -103,6 +103,80 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
     1. Assume a concrete predicted value $epsilon_theta (x_1, 1)$ and compute the squared error $norm(epsilon - epsilon_theta (x_1, 1))^2$.
 ]
 
+=== Parameter Setup & Pixel Selection Methodology
+
+To guarantee 100% mathematical reproducibility across all 1D analytical computations and PyTorch tensor experiments, parameters are centrally configured via `config.py` and exact pixel extraction is executed using `src/dataset.py`:
+
+1. *Global Random Seed*: A fixed random seed `SEED = 42` is set for both NumPy and PyTorch across all script executions.
+2. *Variance Schedule*: Following the linear schedule of Ho et al. (2020) over $T = 1000$ timesteps:
+   $ beta_1 = 1.0 times 10^(-4) = 0.0001, quad beta_T = 0.02 $
+   Thus, $alpha_1 = 1 - beta_1 = 0.9999$.
+3. *Dataset & Sample Selection*:
+   - *Dataset*: MNIST Test Set.
+   - *Canonical Sample*: The first instance of digit `'3'` in the test set.
+   - *Normalizing Transform*: Raw intensity values $I_0 in [0, 255]$ are mapped to $x_0 in [-1.0, 1.0]$ using $x_0 = (I_0 / 127.5) - 1.0$.
+4. *Pixel Selection Rule*:
+   - We search the central foreground stroke region (rows $r in [10, 17]$, columns $c in [10, 17]$) for high-intensity, non-saturated pixels ($0.45 <= x_0 <= 0.96$).
+   - The pixel closest to the spatial centroid $(13, 14)$ meeting these criteria is selected.
+   - *Selected Pixel Coordinate*: Row $r = 10$, Column $c = 14$, with raw grayscale intensity $I_0 = 236$.
+   - *Normalized Input Value ($x_0$)*:
+     $ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
+5. *Sampled Gaussian Noise ($epsilon$)*:
+   - Sampling a standard Gaussian noise tensor $epsilon tilde cal(N)(0, I)$ using `SEED = 42` yields the scalar noise value at pixel $(10, 14)$:
+     $ epsilon = -0.714962 $ <eq-eps>
+
+=== Part A — 1D Single-Step Forward Noising ($t = 1$)
+
+==== Concrete Scalar Values
+- Clean input pixel value: $x_0 = 0.850980$
+- Variance schedule parameter at step $t = 1$: $beta_1 = 0.0001$
+- Injected Gaussian noise: $epsilon = -0.714962$
+
+==== Manual Step-by-Step Computations
+- *Signal Scaling Factor*:
+  $ sqrt(1 - beta_1) = sqrt(1 - 0.0001) = sqrt(0.9999) approx 0.999950 $
+- *Noise Standard Deviation Factor*:
+  $ sqrt(beta_1) = sqrt(0.0001) = 0.010000 $
+- *Conditional Mean ($EE[x_1 mid(|) x_0]$)*:
+  $ mu_1 = sqrt(1 - beta_1) x_0 = 0.999950 times 0.850980 = 0.850938 $
+- *Stochastic Noise Perturbation*:
+  $ sqrt(beta_1) epsilon = 0.010000 times (-0.714962) = -0.007150 $
+- *Noisy Output Pixel State ($x_1$)*:
+  $ x_1 = mu_1 + sqrt(beta_1) epsilon = 0.850938 + (-0.007150) = 0.843788 $ <eq-x1>
+
+==== Closed-Form Jump to Milestone Timestep ($t = 50$)
+Applying the closed-form transition $q(x_t mid(|) x_0) = cal(N)(x_t; sqrt(bar(alpha)_t) x_0, (1 - bar(alpha)_t) I)$:
+- Cumulative signal product at $t = 50$: $bar(alpha)_(50) = 0.971016$
+- Signal coefficient: $sqrt(bar(alpha)_(50)) = 0.985401$
+- Noise coefficient: $sqrt(1 - bar(alpha)_(50)) = 0.170248$
+- Noisy state at $t = 50$:
+  $ x_(50) = sqrt(bar(alpha)_(50)) x_0 + sqrt(1 - bar(alpha)_(50)) epsilon = 0.985401 times (0.850980) + 0.170248 times (-0.714962) = 0.716836 $
+
+==== Theoretical Interpretation
+- *Stochastic Expectation $EE[x_1 mid(|) x_0]$*: Under the Markov forward transition $q(x_1 mid(|) x_0) = cal(N)(sqrt(1 - beta_1) x_0, beta_1 I)$, the expected pixel value after a single step is scaled down strictly by $sqrt(1 - beta_1) approx 0.999950$. The mean value decreases slightly from $0.850980$ to $0.850938$.
+- *Variance Preservation*: Because signal energy is scaled by $1 - beta_1$ and added noise variance is $beta_1$, total variance is preserved at $(1 - beta_1) + beta_1 = 1$. Over $T$ steps, signal content smoothly attenuates while standard Gaussian noise dominates.
+
+=== Part B — Step-by-Step Loss Calculation for $L_"simple"$
+
+Following Ho et al. (2020), the simplified noise-prediction objective at timestep $t = 1$ is:
+$ L_"simple" = EE_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta(x_t, t))^2 ] $ <eq-lsimple>
+
+==== Model Prediction & Pointwise Squared Loss at Pixel $(10, 14)$
+Passing $x_1$ through an initial, untrained `ConditionalUNet` model (with time embedding and class conditioning) produces the predicted noise value at pixel $(10, 14)$:
+$ epsilon_theta(x_1, 1) = 0.421943 $
+
+- *True Injected Noise ($epsilon$)*: $-0.714962$
+- *Prediction Residual*:
+  $ e_1 = epsilon - epsilon_theta(x_1, 1) = -0.714962 - 0.421943 = -1.136905 $
+- *Pointwise Squared Error*:
+  $ norm(epsilon - epsilon_theta(x_1, 1))^2 = (-1.136905)^2 = 1.292554 $
+
+==== Full-Image Mean Squared Error Comparison
+Aggregating over all $28 times 28 = 784$ pixels of the image tensor at step $t = 1$ yields the image-level MSE loss:
+$ L_"simple"^(t=1) = frac(1, 784) sum_(r=1)^(28) sum_(c=1)^(28) (epsilon_(r, c) - epsilon_theta(x_1, 1)_(r, c))^2 = 1.134913 $
+
+This confirms that the single 1D scalar calculation ($1.292554$) directly reflects the multi-dimensional tensor loss computation optimized during model training.
+
 == Latent Diffusion Models (LDM)
 
 #guideline("Task 5")[
