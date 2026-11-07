@@ -1,0 +1,18 @@
+{
+  "model": "Pixel-Space DDPM",
+  "operating_space": "1 x 28 x 28 (784 dims)",
+  "spatial_resolution": "28 x 28",
+  "tensor_elements": 784,
+  "unet_params": 179809,
+  "macs_per_step": 58937344,
+  "flops_per_step": 117874688,
+  "total_gflops_1000_steps": 117.874688,
+  "avg_epoch_time_sec": 9.939222490200006,
+  "sampling_time_1000_steps_sec": 1.7403378669998801,
+  "steps_per_sec": 574.6010696899173,
+  "final_train_loss": 0.021029249402190475,
+  "trained_eps_pred_rc": 0.14978300034999847,
+  "sample_mse_vs_canonical": 0.1519206166267395,
+  "sample_psnr_db": 8.183832855205987,
+  "training_samples": 60000
+}

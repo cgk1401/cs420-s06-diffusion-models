@@ -69,6 +69,7 @@ def build_linear_schedule(
 
 def _extract(coeff: torch.Tensor, t: torch.Tensor, x_shape: torch.Size) -> torch.Tensor:
     """Extract coefficient at timestep tensor `t` and reshape to broadcast over `x_shape`."""
+    t = t.to(coeff.device)
     batch_size = t.shape[0]
     out = coeff.gather(-1, t)
     return out.reshape(batch_size, *((1,) * (len(x_shape) - 1)))

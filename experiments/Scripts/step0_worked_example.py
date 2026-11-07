@@ -5,6 +5,7 @@ uses the exact same random seed (SEED=42) and Gaussian noise tensor used in Sect
 """
 
 import sys
+import argparse
 from pathlib import Path
 import json
 import torch
@@ -15,24 +16,28 @@ import config
 from src.dataset import get_canonical_digit_sample
 from src.diffusion import build_linear_schedule, q_sample_one_step, q_sample_closed_form
 from src.models_unet import ConditionalUNet
+from src.utils_metrics import get_device, describe_device
 
 
-def main():
+def main(device: str | torch.device | None = None):
     torch.manual_seed(config.SEED)
+    device = torch.device(device) if device is not None else get_device()
+    print(f"[Worked Example] Detected device: {describe_device(device)}")
     schedule = build_linear_schedule(
         T=config.T,
         beta_start=config.BETA_START,
         beta_end=config.BETA_END,
-        device="cpu",
+        device=device,
     )
 
     # 1. Load canonical 28x28 digit '3' and its foreground pixel (r, c)
     img_x0, label, (r, c) = get_canonical_digit_sample(digit=3)
-    x0_batch = img_x0.unsqueeze(0)  # [1, 1, 28, 28]
+    x0_batch = img_x0.unsqueeze(0).to(device)  # [1, 1, 28, 28]
 
     # 2. Sample the canonical Gaussian noise tensor with SEED=42
     torch.manual_seed(config.SEED)
-    eps_tensor = torch.randn_like(x0_batch)
+    # Generate noise on CPU then move to device so values are identical on GPU and CPU.
+    eps_tensor = torch.randn_like(x0_batch.cpu()).to(device)
 
     # Extract 1D scalar values at pixel (r, c)
     x0_val = float(x0_batch[0, 0, r, c].item())
@@ -52,7 +57,7 @@ def main():
 
     # Verify against tensor function q_sample_one_step
     x1_tensor, _ = q_sample_one_step(
-        x0_batch, torch.tensor([t1_idx], dtype=torch.long), schedule, noise=eps_tensor
+        x0_batch, torch.tensor([t1_idx], dtype=torch.long, device=device), schedule, noise=eps_tensor
     )
     assert abs(float(x1_tensor[0, 0, r, c].item()) - x1_val) < 1e-6
 
@@ -62,19 +67,19 @@ def main():
     sqrt_alpha_bar_50 = float(schedule.sqrt_alphas_cumprod[t50_idx].item())
     sqrt_one_minus_alpha_bar_50 = float(schedule.sqrt_one_minus_alphas_cumprod[t50_idx].item())
     x50_tensor, _ = q_sample_closed_form(
-        x0_batch, torch.tensor([t50_idx], dtype=torch.long), schedule, noise=eps_tensor
+        x0_batch, torch.tensor([t50_idx], dtype=torch.long, device=device), schedule, noise=eps_tensor
     )
     x50_val = float(x50_tensor[0, 0, r, c].item())
 
     # --- Part B: Step-by-Step Loss Calculation L_simple at pixel (r, c) ---
     torch.manual_seed(config.SEED)
-    unet = ConditionalUNet(in_channels=1, base_channels=32, time_dim=64)
+    unet = ConditionalUNet(in_channels=1, base_channels=32, time_dim=64).to(device)
     unet.eval()
     with torch.no_grad():
         eps_pred_tensor = unet(
             x1_tensor,
-            torch.tensor([t1_idx], dtype=torch.long),
-            torch.tensor([label], dtype=torch.long),
+            torch.tensor([t1_idx], dtype=torch.long, device=device),
+            torch.tensor([label], dtype=torch.long, device=device),
         )
     eps_pred_val = float(eps_pred_tensor[0, 0, r, c].item())
     diff_val = eps_val - eps_pred_val
@@ -158,4 +163,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Generate the 1D worked numerical example")
+    parser.add_argument(
+        "--device",
+        choices=["auto", "cuda", "cpu"],
+        default="auto",
+        help="Compute device: auto (GPU if available, else CPU), cuda, or cpu",
+    )
+    args = parser.parse_args()
+
+    device = None if args.device == "auto" else args.device
+    if device == "cuda" and not torch.cuda.is_available():
+        print("[Worked Example] CUDA requested but no GPU is available; falling back to CPU.")
+        device = "cpu"
+    main(device=device)

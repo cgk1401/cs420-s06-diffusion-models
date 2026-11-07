@@ -22,6 +22,12 @@ for _d in (OUTPUTS_DIR, FIGURES_DIR, TABLES_DIR, CHECKPOINTS_DIR):
 # Global random seed for complete reproducibility
 SEED = 42
 
+# Training dataset configuration
+# None: Train on full 60,000 MNIST images
+# Integer (e.g. 2000, 5000): Train on subset
+# 320: Ultra-fast prototype demo mode
+TRAIN_MAX_SAMPLES = None
+
 # Image & Latent dimensions
 IMAGE_SIZE = 28
 IMAGE_CHANNELS = 1

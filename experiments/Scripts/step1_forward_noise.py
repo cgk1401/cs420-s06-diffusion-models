@@ -5,6 +5,7 @@ as Step 0 (Section 3.2 worked example).
 """
 
 import sys
+import argparse
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -15,29 +16,32 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config
 from src.dataset import get_canonical_digit_sample, unscale_to_0_1
 from src.diffusion import build_linear_schedule, q_sample_closed_form
-from src.utils_metrics import save_figure_both
+from src.utils_metrics import save_figure_both, get_device, describe_device
 
 
-def generate_forward_5levels_figure():
+def generate_forward_5levels_figure(device: str | torch.device | None = None):
     torch.manual_seed(config.SEED)
+    device = torch.device(device) if device is not None else get_device()
+    print(f"[Forward Noising] Detected device: {describe_device(device)}")
     schedule = build_linear_schedule(
         T=config.T,
         beta_start=config.BETA_START,
         beta_end=config.BETA_END,
-        device="cpu",
+        device=device,
     )
 
     img_x0, label, (r, c) = get_canonical_digit_sample(digit=3)
-    x0_batch = img_x0.unsqueeze(0)  # [1, 1, 28, 28]
+    x0_batch = img_x0.unsqueeze(0).to(device)  # [1, 1, 28, 28]
 
     torch.manual_seed(config.SEED)
-    fixed_eps = torch.randn_like(x0_batch)
+    # Generate noise on CPU then move to device so it matches Step 0 bit-for-bit.
+    fixed_eps = torch.randn_like(x0_batch.cpu()).to(device)
 
     images = [unscale_to_0_1(x0_batch[0, 0])]
     titles = [f"Clean $x_0$ ($t=0$)\n$\\sqrt{{\\bar{{\\alpha}}_0}}=1.00,\\; x_0({r},{c})={x0_batch[0,0,r,c]:.2f}$"]
 
     for step_idx, step_label in zip(config.FORWARD_STEPS_5, config.FORWARD_LABELS_5):
-        t_tensor = torch.tensor([step_idx], dtype=torch.long)
+        t_tensor = torch.tensor([step_idx], dtype=torch.long, device=device)
         xt_batch, _ = q_sample_closed_form(x0_batch, t_tensor, schedule, noise=fixed_eps)
         sqrt_ab = float(schedule.sqrt_alphas_cumprod[step_idx].item())
         xt_pixel = float(xt_batch[0, 0, r, c].item())
@@ -76,4 +80,17 @@ def generate_forward_5levels_figure():
 
 
 if __name__ == "__main__":
-    generate_forward_5levels_figure()
+    parser = argparse.ArgumentParser(description="Generate forward-noising 5-level figure")
+    parser.add_argument(
+        "--device",
+        choices=["auto", "cuda", "cpu"],
+        default="auto",
+        help="Compute device: auto (GPU if available, else CPU), cuda, or cpu",
+    )
+    args = parser.parse_args()
+
+    device = None if args.device == "auto" else args.device
+    if device == "cuda" and not torch.cuda.is_available():
+        print("[Forward Noising] CUDA requested but no GPU is available; falling back to CPU.")
+        device = "cpu"
+    generate_forward_5levels_figure(device=device)
