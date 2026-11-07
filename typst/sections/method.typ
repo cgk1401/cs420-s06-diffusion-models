@@ -8,11 +8,6 @@
 
 == DDPM: Forward Noising and Reverse Denoising
 
-#guideline("Task 2 & Section III (Equations to Explain)")[
-  - *Forward Process & $beta$ Schedule:* Explain progressive Gaussian noise injection via $beta_1, dots, beta_T$ (@eq:forward) and closed-form sampling $q(x_t | x_0) = cal(N)(sqrt(overline(alpha)_t) x_0, (1 - overline(alpha)_t) bold(I))$.
-  - *Reverse Process, Noise Predictor & Sampling:* Explain $p_theta (x_(t-1) | x_t)$, the U-Net noise predictor $epsilon_theta (x_t, t)$, the training loss (@eq:lsimple), and iterative sampling from $x_T ~ cal(N)(bold(0), bold(I))$ back to $x_0$.
-  - *Mandatory Specification (Section III):* Define *every symbol*, specify units/value ranges, and state modeling assumptions (@tab:symbols).
-]
 
 === Theoretical Framework & Modeling Assumptions
 
@@ -94,151 +89,76 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
 
 == Step-by-Step Worked Numerical Example
 
-#guideline("Task 3 & Section III — MANDATORY WORKED EXAMPLE")[
-  - *Part A — 1D Single-Step Forward Noising (Task 3):*
-    1. Pick concrete scalar values for $x_0$, $beta_1$, and $epsilon$.
-    2. Manually compute conditional mean $sqrt(1 - beta_1) x_0$, standard deviation $sqrt(beta_1)$, and noisy output $x_1$.
-    3. Interpret the stochastic expectation $bb(E)[x_1 | x_0]$ and variance preservation.
-  - *Part B — Step-by-Step Loss Calculation for $L_"simple"$ (Section III):*
-    1. Assume a concrete predicted value $epsilon_theta (x_1, 1)$ and compute the squared error $norm(epsilon - epsilon_theta (x_1, 1))^2$.
-]
 
-=== Parameter Setup & Pixel Selection Methodology
 
-To guarantee 100% mathematical reproducibility across all 1D analytical computations and PyTorch tensor experiments, parameters are centrally configured via `config.py` and exact pixel extraction is executed using `src/dataset.py`:
+The numerical example uses the MNIST test set and selects the first image labeled as the digit `3`, whose raw pixel intensities $I_0 in [0, 255]$ are normalized to $x_0 in [-1, 1]$ using $x_0 = I_0 / 127.5 - 1$; the variance schedule follows the method of Ho and colleagues (2020) with $T = 1000$, $beta_1 = 0.0001$, and $beta_T = 0.02$, and a fixed random seed of `42` is used for both NumPy and PyTorch, while the calculation uses the pixel at row $10$ and column $14$ from the central foreground region; its raw intensity is $236$ and its normalized value is:
 
-1. *Global Random Seed*: A fixed random seed `SEED = 42` is set for both NumPy and PyTorch across all script executions.
-2. *Variance Schedule*: Following the linear schedule of Ho et al. (2020) over $T = 1000$ timesteps:
-   $ beta_1 = 1.0 times 10^(-4) = 0.0001, quad beta_T = 0.02 $
-   Thus, $alpha_1 = 1 - beta_1 = 0.9999$.
-3. *Dataset & Sample Selection*:
-   - *Dataset*: MNIST Test Set.
-   - *Canonical Sample*: The first instance of digit `'3'` in the test set.
-   - *Normalizing Transform*: Raw intensity values $I_0 in [0, 255]$ are mapped to $x_0 in [-1.0, 1.0]$ using $x_0 = (I_0 / 127.5) - 1.0$.
-4. *Pixel Selection Rule*:
-   - We search the central foreground stroke region (rows $r in [10, 17]$, columns $c in [10, 17]$) for high-intensity, non-saturated pixels ($0.45 <= x_0 <= 0.96$).
-   - The pixel closest to the spatial centroid $(13, 14)$ meeting these criteria is selected.
-   - *Selected Pixel Coordinate*: Row $r = 10$, Column $c = 14$, with raw grayscale intensity $I_0 = 236$.
-   - *Normalized Input Value ($x_0$)*:
-     $ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
-5. *Sampled Gaussian Noise ($epsilon$)*:
-   - Sampling a standard Gaussian noise tensor $epsilon tilde cal(N)(0, I)$ using `SEED = 42` yields the scalar noise value at pixel $(10, 14)$:
-     $ epsilon = -0.714962 $ <eq-eps>
+$ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
 
-=== Part A — 1D Single-Step Forward Noising ($t = 1$)
+The fixed seed produces Gaussian noise $epsilon = -0.714962$ at this pixel, and at timestep $t = 1$ the signal coefficient is $sqrt(1 - beta_1) = sqrt(0.9999) approx 0.999950$ while the noise standard deviation is $sqrt(beta_1) = 0.010000$; consequently, the conditional mean is $mu_1 = 0.999950 times 0.850980 = 0.850938$ and the added noise is $0.010000 times (-0.714962) = -0.007150$, yielding the noisy pixel value:
 
-==== Concrete Scalar Values
-- Clean input pixel value: $x_0 = 0.850980$
-- Variance schedule parameter at step $t = 1$: $beta_1 = 0.0001$
-- Injected Gaussian noise: $epsilon = -0.714962$
+$ x_1 = mu_1 + sqrt(beta_1) epsilon = 0.850938 - 0.007150 = 0.843788 $ <eq-x1>
 
-==== Manual Step-by-Step Computations
-- *Signal Scaling Factor*:
-  $ sqrt(1 - beta_1) = sqrt(1 - 0.0001) = sqrt(0.9999) approx 0.999950 $
-- *Noise Standard Deviation Factor*:
-  $ sqrt(beta_1) = sqrt(0.0001) = 0.010000 $
-- *Conditional Mean ($EE[x_1 mid(|) x_0]$)*:
-  $ mu_1 = sqrt(1 - beta_1) x_0 = 0.999950 times 0.850980 = 0.850938 $
-- *Stochastic Noise Perturbation*:
-  $ sqrt(beta_1) epsilon = 0.010000 times (-0.714962) = -0.007150 $
-- *Noisy Output Pixel State ($x_1$)*:
-  $ x_1 = mu_1 + sqrt(beta_1) epsilon = 0.850938 + (-0.007150) = 0.843788 $ <eq-x1>
+This result is one realization from $q(x_1 | x_0) = cal(N)(sqrt(1 - beta_1) x_0, beta_1 I)$, whose expectation is $bb(E)[x_1 | x_0] = 0.850938$; for a data distribution with unit variance and independent unit-variance noise, the marginal variance remains $(1 - beta_1) + beta_1 = 1$, while the signal contribution gradually decreases over the diffusion steps; the closed-form expression gives a later state without simulating every intermediate transition, and at $t = 50$, where $bar(alpha)_(50) = 0.971016$, the signal and noise coefficients are $0.985401$ and $0.170248$, respectively, so the noisy state is:
 
-==== Closed-Form Jump to Milestone Timestep ($t = 50$)
-Applying the closed-form transition $q(x_t mid(|) x_0) = cal(N)(x_t; sqrt(bar(alpha)_t) x_0, (1 - bar(alpha)_t) I)$:
-- Cumulative signal product at $t = 50$: $bar(alpha)_(50) = 0.971016$
-- Signal coefficient: $sqrt(bar(alpha)_(50)) = 0.985401$
-- Noise coefficient: $sqrt(1 - bar(alpha)_(50)) = 0.170248$
-- Noisy state at $t = 50$:
-  $ x_(50) = sqrt(bar(alpha)_(50)) x_0 + sqrt(1 - bar(alpha)_(50)) epsilon = 0.985401 times (0.850980) + 0.170248 times (-0.714962) = 0.716836 $
+$ x_(50) = 0.985401 times 0.850980 + 0.170248 times (-0.714962) = 0.716836 $
 
-==== Theoretical Interpretation
-- *Stochastic Expectation $EE[x_1 mid(|) x_0]$*: Under the Markov forward transition $q(x_1 mid(|) x_0) = cal(N)(sqrt(1 - beta_1) x_0, beta_1 I)$, the expected pixel value after a single step is scaled down strictly by $sqrt(1 - beta_1) approx 0.999950$. The mean value decreases slightly from $0.850980$ to $0.850938$.
-- *Variance Preservation*: Because signal energy is scaled by $1 - beta_1$ and added noise variance is $beta_1$, total variance is preserved at $(1 - beta_1) + beta_1 = 1$. Over $T$ steps, signal content smoothly attenuates while standard Gaussian noise dominates.
+Using the same example, the simplified noise-prediction objective at timestep $t = 1$ is:
 
-=== Part B — Step-by-Step Loss Calculation for $L_"simple"$
-
-Following Ho et al. (2020), the simplified noise-prediction objective at timestep $t = 1$ is:
 $ L_"simple" = EE_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta(x_t, t))^2 ] $ <eq-lsimple>
 
-==== Model Prediction & Pointwise Squared Loss at Pixel $(10, 14)$
-Passing $x_1$ through an initial, untrained `ConditionalUNet` model (with time embedding and class conditioning) produces the predicted noise value at pixel $(10, 14)$:
-$ epsilon_theta(x_1, 1) = 0.421943 $
+Passing $x_1$ through the initial, untrained `ConditionalUNet` with time and class conditioning gives predicted noise $epsilon_theta(x_1, 1) = 0.421943$, so the difference between the injected noise and the prediction is:
 
-- *True Injected Noise ($epsilon$)*: $-0.714962$
-- *Prediction Residual*:
-  $ e_1 = epsilon - epsilon_theta(x_1, 1) = -0.714962 - 0.421943 = -1.136905 $
-- *Pointwise Squared Error*:
-  $ norm(epsilon - epsilon_theta(x_1, 1))^2 = (-1.136905)^2 = 1.292554 $
+$ e_1 = epsilon - epsilon_theta(x_1, 1) = -0.714962 - 0.421943 = -1.136905 $
 
-==== Full-Image Mean Squared Error Comparison
-Aggregating over all $28 times 28 = 784$ pixels of the image tensor at step $t = 1$ yields the image-level MSE loss:
+Thus, the pointwise squared error for the selected pixel is:
+
+$ norm(epsilon - epsilon_theta(x_1, 1))^2 = (-1.136905)^2 = 1.292554 $
+
+For comparison, averaging the squared prediction errors across all $28 times 28 = 784$ pixels gives the image-level loss:
+
 $ L_"simple"^(t=1) = frac(1, 784) sum_(r=1)^(28) sum_(c=1)^(28) (epsilon_(r, c) - epsilon_theta(x_1, 1)_(r, c))^2 = 1.134913 $
 
-This confirms that the single 1D scalar calculation ($1.292554$) directly reflects the multi-dimensional tensor loss computation optimized during model training.
+The single-pixel error is one contribution to this image-level mean, while training minimizes the corresponding noise-prediction error over sampled images, timesteps, and noise vectors
 
 == Latent Diffusion Models (LDM)
 
-#guideline("Task 5")[
-  - *VAE Encoder / Decoder:* Explain spatial compression $z = cal(E)(x) in bb(R)^(h times w times c)$ with downsampling factor $f = H / h = W / w$ and reconstruction $tilde(x) = cal(D)(z_0)$.
-  - *Operations in Latent Space:* Formulate forward/reverse diffusion on $z_t$ and explain why computational cost drops substantially.
-  - *Cross-Attention Conditioning:* Explain domain encoder $tau_theta (y)$ and $"Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V$ for text/layout prompts.
-]
 
-=== VAE Encoder / Decoder & Perceptual Compression
 
-To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling.
+To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling
 
-1. *Perceptual Spatial Compression ($z = cal(E)(x)$):* \
-   An autoencoder consisting of an encoder $cal(E)$ compresses an RGB pixel image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$:
-   $ z = cal(E)(x) $
-   The spatial dimensions are downsampled by a factor $f = H / h = W / w = 2^m$ (where $m in bb(N)$). LDM explores downsampling factors $f in \{1, 2, 4, 8, 16, 32\}$. For instance, an $f = 8$ compression factor reduces a $256 times 256 times 3$ pixel image to a $32 times 32 times 4$ latent tensor, discarding high-frequency imperceptible details while preserving essential structural semantics.
+An autoencoder maps an RGB image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$ with its encoder $cal(E)$
 
-2. *Perceptual Reconstruction ($tilde(x) = cal(D)(z_0)$):* \
-   A decoder $cal(D)$ learns to map the denoised latent representation $z_0$ back to the original image space:
-   $ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $
-   To prevent high-variance latent spaces during autoencoder training, two regularization variants are utilized:
-   - *KL-reg:* Imposes a mild KL-penalty towards a standard normal distribution on the learned latent space, similar to a Variational Autoencoder.
-   - *VQ-reg:* Incorporates a vector quantization layer within the decoder, acting as a VQ-GAN latent space. \
-   Combined with perceptual loss terms (LPIPS) and patch-based adversarial losses, the autoencoder ensures that $tilde(x)$ maintains high visual fidelity without blurriness.
+$ z = cal(E)(x) $
 
-=== Diffusion Operations in Latent Space & Computational Efficiency
+The spatial downsampling factor is $f = H / h = W / w = 2^m$, where $m in bb(N)$ and LDM considers factors $f in \{1, 2, 4, 8, 16, 32\}$; for instance, with $f = 8$, an image of size $256 times 256 times 3$ becomes a latent tensor of size $32 times 32 times 4$, reducing computation while retaining important structural information, and a decoder maps the denoised latent $z_0$ back to image space
 
-By shifting the generative diffusion process into the lower-dimensional latent space $bb(R)^(h times w times c)$, LDM executes all forward noising and reverse denoising transitions on latent vectors $z_t$.
+$ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $
 
-1. *Forward Latent Diffusion:* \
-   $ q(z_(1:T) | z_0) = product_(t=1)^T q(z_t | z_(t-1)), quad q(z_t | z_0) = cal(N)(z_t; sqrt(overline(alpha)_t) z_0, (1 - overline(alpha)_t) bold(I)) $
-   Arbitrary latent state sampling follows the closed form $z_t (z_0, epsilon) = sqrt(overline(alpha)_t) z_0 + sqrt(1 - overline(alpha)_t) epsilon$, where $epsilon ~ cal(N)(bold(0), bold(I))$.
+To keep the latent representation useful for reconstruction, the autoencoder can use KL regularization toward a standard normal distribution or vector quantization as in VQ-GAN, alongside perceptual losses such as LPIPS and patch-based adversarial losses
 
-2. *Reverse Latent Diffusion & Objective Function:* \
-   The U-Net neural network $epsilon_theta (z_t, t, tau_theta (y))$ predicts the noise vector $epsilon$ injected into the latent space:
-   $ L_"LDM" = bb(E)_(cal(E)(x), y, epsilon, t) [ norm(epsilon - epsilon_theta (z_t, t, tau_theta (y)))^2 ] $ <eq:lldm>
+LDM applies the forward and reverse diffusion processes to latent states $z_t$ rather than full-resolution pixels, with the forward process defined as
 
-3. *Substantial Computational Savings:*
-   - *Spatial Token Reduction:* Compressing image resolution by factor $f$ reduces spatial dimension size by $f^2$. For $f = 8$, the spatial token sequence length drops by a factor of $64$ (e.g., from $256^2 = 65,536$ pixels to $32^2 = 1,024$ latent tokens).
-   - *Resource Efficiency:* Operating on $z_t$ lowers memory footprint and computational FLOPs for U-Net self-attention blocks, accelerating training convergence and boosting sampling throughput by $3 times$ to $10 times$ compared to pixel-space DDPM.
+$ q(z_(1:T) | z_0) = product_(t=1)^T q(z_t | z_(t-1)), quad q(z_t | z_0) = cal(N)(z_t; sqrt(overline(alpha)_t) z_0, (1 - overline(alpha)_t) bold(I)) $
 
-=== Cross-Attention Conditioning Mechanism
+The closed-form expression $z_t (z_0, epsilon) = sqrt(overline(alpha)_t) z_0 + sqrt(1 - overline(alpha)_t) epsilon$, where $epsilon ~ cal(N)(bold(0), bold(I))$, gives the latent state at any timestep, and during denoising, the U-Net $epsilon_theta (z_t, t, tau_theta (y))$ estimates the noise conditioned on the encoded input $y$, with the model trained using the objective
 
-To transform diffusion models into versatile, multi-modal conditional generators, LDM integrates a flexible Cross-Attention mechanism into the U-Net backbone.
+$ L_"LDM" = bb(E)_(cal(E)(x), y, epsilon, t) [ norm(epsilon - epsilon_theta (z_t, t, tau_theta (y)))^2 ] $ <eq:lldm>
 
-1. *Domain-Specific Encoder ($tau_theta (y)$):* \
-   Conditioning inputs $y$ (such as text prompts, layout bounding boxes, semantic segmentation maps, or target images) are processed by a specialized domain encoder $tau_theta (y) in bb(R)^(M times d_tau)$ that maps $y$ into an intermediate representation vector of sequence length $M$ and dimension $d_tau$ (e.g., a Transformer/BERT encoder for text).
+Compressing each spatial dimension by $f$ reduces the number of spatial tokens by $f^2$; at $f = 8$, for instance, a $256 times 256$ image has $65,536$ spatial positions while its $32 times 32$ latent has $1,024$, lowering memory use and computation in the U-Net and its attention layers and allowing faster training and sampling than pixel-space diffusion
 
-2. *Cross-Attention Formulation:* \
-   Let $phi_i (z_t) in bb(R)^(N times d_epsilon^i)$ denote the flattened intermediate spatial feature map of the U-Net at layer $i$, where $N = h_i times w_i$. The cross-attention layer projects features into Query, Key, and Value matrices:
-   $ Q = W_Q^((i)) dot phi_i (z_t) in bb(R)^(N times d), quad K = W_K^((i)) dot tau_theta (y) in bb(R)^(M times d), quad V = W_V^((i)) dot tau_theta (y) in bb(R)^(M times d) $
-   The attention weights and output feature updates are computed as:
-   $ "Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V $ <eq:crossattn>
-   where $W_Q^((i)) in bb(R)^(d times d_epsilon^i)$, $W_K^((i)) in bb(R)^(d times d_tau)$, and $W_V^((i)) in bb(R)^(d times d_tau)$ are learnable projection weight matrices, and $d$ is the projection channel dimension.
+For conditional generation, LDM encodes text prompts, layouts, segmentation maps, or other inputs with a domain-specific encoder $tau_theta (y) in bb(R)^(M times d_tau)$, producing $M$ conditioning tokens of dimension $d_tau$; at U-Net layer $i$, the spatial features $phi_i (z_t) in bb(R)^(N times d_epsilon^i)$, where $N = h_i times w_i$, are projected into queries, while the encoded conditioning tokens provide keys and values:
 
-3. *Multi-Modal Interaction:* \
-   The matrix product $Q K^T in bb(R)^(N times M)$ evaluates pairwise affinity between each spatial location in the U-Net ($N$) and each conditioning token ($M$), enabling precise spatial alignment and semantic control (e.g., placing objects described in text at specific spatial regions).
+$ Q = W_Q^((i)) dot phi_i (z_t) in bb(R)^(N times d), quad K = W_K^((i)) dot tau_theta (y) in bb(R)^(M times d), quad V = W_V^((i)) dot tau_theta (y) in bb(R)^(M times d) $
 
-=== Overall Pipeline Diagram of Latent Diffusion Models
+Cross-attention is calculated as
+
+$ "Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V $ <eq:crossattn>
+
+Here, $W_Q^((i))$, $W_K^((i))$, and $W_V^((i))$ are learned projection matrices and $d$ is the projection dimension; the matrix $Q K^T in bb(R)^(N times M)$ measures the relationship between each spatial location and each conditioning token, allowing the generated content to reflect the input prompt or layout
 
 #figure(
-  caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5).],
+  caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5)],
 )[
   #rect(width: 100%, stroke: 0.6pt + luma(120), inset: 10pt, radius: 4pt, fill: luma(250))[
     #set text(size: 8.2pt)
@@ -247,7 +167,7 @@ To transform diffusion models into versatile, multi-modal conditional generators
       gutter: 8pt,
       [
         #align(center)[
-          *1. Perceptual Compression & Reconstruction (Pixel <-> Latent)*
+          *Perceptual Compression & Reconstruction (Pixel <-> Latent)*
         ]
         #v(2pt)
         #grid(
@@ -288,7 +208,7 @@ To transform diffusion models into versatile, multi-modal conditional generators
       ],
       [
         #align(center)[
-          *2. Latent Diffusion Process & Cross-Attention Conditioning*
+          *Latent Diffusion Process & Cross-Attention Conditioning*
         ]
         #v(2pt)
         #grid(
@@ -334,7 +254,7 @@ To transform diffusion models into versatile, multi-modal conditional generators
     #v(4pt)
     #align(center)[
       #text(size: 7.5pt, style: "italic", fill: luma(80))[
-        Full LDM Pipeline: Image $x$ is compressed into latent space $z_0 = cal(E)(x)$. Diffusion runs in latent space on $z_t$. Conditioning $y$ is encoded by $tau_theta (y)$ and injected via Cross-Attention layers inside the UNet $epsilon_theta$. Denoised $z_0$ is decoded back to pixel space $tilde(x) = cal(D)(z_0)$.
+        Full LDM Pipeline: Image $x$ is compressed into latent space $z_0 = cal(E)(x)$, diffusion runs in latent space on $z_t$, conditioning $y$ is encoded by $tau_theta (y)$ and injected via Cross-Attention layers inside the U-Net $epsilon_theta$, and denoised $z_0$ is decoded back to pixel space $tilde(x) = cal(D)(z_0)$
       ]
     ]
   ]
