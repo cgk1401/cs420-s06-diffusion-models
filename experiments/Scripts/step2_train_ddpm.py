@@ -13,6 +13,7 @@ Generates the combined 2-row Figure (`fig_exp_pixel_forward_reverse.png`) for Se
 import sys
 import time
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 import json
 import matplotlib.pyplot as plt
@@ -127,10 +128,17 @@ def train_and_evaluate_pixel_ddpm(
         use_cross_attention=True,
     ).to(device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=2e-3, weight_decay=1e-4)
-    lr_sched = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-5)
+    lr = 2e-3
+    weight_decay = 1e-4
+    eta_min = 1e-5
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    lr_sched = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=eta_min)
+
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
 
     epoch_times = []
+    epoch_losses = []
     final_loss = 0.0
 
     model.train()
@@ -156,6 +164,7 @@ def train_and_evaluate_pixel_ddpm(
         ep_time = time.perf_counter() - t0
         epoch_times.append(ep_time)
         final_loss = running_loss / max(n_batches, 1)
+        epoch_losses.append(final_loss)
         print(f"  Epoch {ep+1:02d}/{epochs:02d} | L_simple = {final_loss:.4f} | Time = {ep_time:.2f}s")
 
     ckpt_path = config.CHECKPOINTS_DIR / "ddpm_pixel_28x28.pth"
@@ -251,21 +260,75 @@ def train_and_evaluate_pixel_ddpm(
 
     stats = {
         "model": "Pixel-Space DDPM",
+        "run_timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "dataset": "MNIST",
+        "dataset_split": "train",
+        "training_samples": n_samples,
+        "image_size": config.IMAGE_SIZE,
+        "image_channels": config.IMAGE_CHANNELS,
+        "normalization": "[-1.0, 1.0]",
+        "seed": config.SEED,
+        "device": str(device),
+        "device_name": describe_device(device),
+        "torch_version": torch.__version__,
+        "cuda_version": torch.version.cuda,
         "operating_space": "1 x 28 x 28 (784 dims)",
         "spatial_resolution": "28 x 28",
         "tensor_elements": 784,
         "unet_params": params_count,
+        "unet_config": {
+            "in_channels": config.IMAGE_CHANNELS,
+            "base_channels": 32,
+            "time_dim": 64,
+            "num_classes": 10,
+            "use_cross_attention": True,
+        },
+        "schedule": {
+            "type": "linear",
+            "T": config.T,
+            "beta_start": config.BETA_START,
+            "beta_end": config.BETA_END,
+        },
+        "optimizer": {
+            "name": "AdamW",
+            "lr": lr,
+            "weight_decay": weight_decay,
+        },
+        "lr_scheduler": {
+            "name": "CosineAnnealingLR",
+            "T_max": epochs,
+            "eta_min": eta_min,
+        },
+        "batch_size": batch_size,
+        "batches_per_epoch": len(loader),
+        "epochs": epochs,
+        "epoch_time_history_sec": [float(x) for x in epoch_times],
+        "train_loss_history": [float(x) for x in epoch_losses],
+        "avg_epoch_time_sec": float(sum(epoch_times) / len(epoch_times)),
+        "total_train_time_sec": float(sum(epoch_times)),
+        "final_train_loss": final_loss,
+        "best_train_loss": float(min(epoch_losses)) if epoch_losses else final_loss,
         "macs_per_step": macs_per_step,
         "flops_per_step": macs_per_step * 2,
         "total_gflops_1000_steps": (macs_per_step * 2 * config.T) / 1e9,
-        "avg_epoch_time_sec": float(sum(epoch_times) / len(epoch_times)),
+        "sampling_steps": config.T,
+        "sampling_seed": config.SEED,
+        "sampling_label": label_3,
+        "clip_x0": True,
+        "clip_range": 1.0,
+        "recorded_reverse_steps": config.REVERSE_STEPS_SHOW,
         "sampling_time_1000_steps_sec": float(sampling_time_1000),
         "steps_per_sec": float(config.T / sampling_time_1000),
-        "final_train_loss": final_loss,
+        "pixel_coord": [r, c],
         "trained_eps_pred_rc": trained_eps_pred_rc,
         "sample_mse_vs_canonical": mse_val,
         "sample_psnr_db": psnr_val,
-        "training_samples": n_samples,
+        "peak_gpu_memory_mb": (
+            float(torch.cuda.max_memory_allocated(device) / (1024 ** 2))
+            if device.type == "cuda"
+            else None
+        ),
+        "checkpoint_path": str(ckpt_path),
     }
     (config.TABLES_DIR / "ddpm_pixel_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     return stats
