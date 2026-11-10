@@ -1,12 +1,12 @@
 
 = Background and Paper Review
-== Discriminative vs. Generative Models
+== Discriminative and Generative Models
 
 Discriminative and generative models differ in their learning objectives. Given an input image $x$ and its label $y$, a discriminative model estimates the conditional distribution $p(y | x)$ and uses it to assign the input to a class, such as distinguishing a cat from a dog. This capability does not imply the ability to synthesize new images. In contrast, a generative model learns the distribution of the data itself - either the unconditional distribution $p(x)$ or a conditional distribution $p(x | y)$ - and can therefore draw new samples from the learned distribution. For example, an unconditional generative model can synthesize novel human faces, whereas a conditional model can generate images consistent with a class label or a text description. In essence, discriminative models estimate the probability of a label given an input, while generative models estimate the distribution from which new inputs can be sampled.
 
 == Qualitative Comparison of Generative Models
 
-There are several types of generative models, and each uses a different approach to learn and generate data. Generative Adversarial Networks (GANs) consist of two networks: a generator and a discriminator. The generator tries to create realistic images, while the discriminator attempts to distinguish generated images from real ones. This process can produce high-quality images relatively quickly. However, GAN training can be unstable, and the model may experience mode collapse, where it generates only a limited variety of images @goodfellow2014gan.
+There are several types of generative models, and each uses a different approach to learn and generate data. GANs consist of two networks: a generator and a discriminator. The generator tries to create realistic images, while the discriminator attempts to distinguish generated images from real ones. This process can produce high-quality images relatively quickly. However, GAN training can be unstable, and the model may experience mode collapse, where it generates only a limited variety of images @goodfellow2014gan.
 
 Autoregressive models generate data one component at a time by using conditional probabilities. Each new component depends on the components generated before it. This provides a clear probabilistic way to model data, but it also means that generation must happen sequentially. As a result, generating high-dimensional data can take considerable time.
 
@@ -28,13 +28,13 @@ Table @tab:gen-comparison summarizes the main differences between these generati
       inset: (x: 5pt, y: 5.5pt),
 
       table.hline(stroke: 0.9pt),
-      [*Criterion*], [*GANs*], [*Autoregressive*], [*VAEs*], [*Diffusion Models*],
+      [Criterion], [GANs], [Autoregressive], [VAEs], [Diffusion Models],
       table.hline(stroke: 0.5pt),
 
       [Core Principle],
-      [Adversarial \ #text(size: 7.3pt, fill: luma(90))[Generator vs. discriminator]],
+      [Adversarial \ #text(size: 7.3pt, fill: luma(90))[Generator against discriminator]],
       [Sequential \ #text(size: 7.3pt, fill: luma(90))[Conditional step-by-step]],
-      [Autoencoding \ #text(size: 7.3pt, fill: luma(90))[Latent compress & decode]],
+      [Autoencoding \ #text(size: 7.3pt, fill: luma(90))[Latent compression and decoding]],
       [Iterative Denoising \ #text(size: 7.3pt, fill: luma(90))[Multi-step noise removal]],
 
       [Sample Quality],
@@ -66,7 +66,7 @@ Table @tab:gen-comparison summarizes the main differences between these generati
   },
 ) <tab:gen-comparison>
 
-From this comparison, it can be seen that each generative approach has its own advantages and limitations. GANs and VAEs are generally faster when generating samples, while Diffusion Models often produce high-quality and diverse images but require more computation. This difference becomes especially important when working with high-resolution images. It is also one of the main reasons why Latent Diffusion Models were developed, as they aim to reduce the computational cost of diffusion-based image generation.
+From this comparison, it can be seen that each generative approach has its own advantages and limitations. GANs and VAEs are generally faster when generating samples, while Diffusion Models often produce high-quality and diverse images but require more computation. This difference becomes especially important when working with high-resolution images. It is also one of the main reasons why LDM was developed, as it aims to reduce the computational cost of diffusion-based image generation.
 
 == Review of Core Papers: From DDPM to LDM
 
@@ -80,7 +80,7 @@ Despite these results, DDPM still has an important limitation. The model perform
 
 === LDM -- High-Resolution Image Synthesis with Latent Diffusion Models.
 
-To address the computational cost of pixel-space diffusion, Rombach et al. @rombach2022ldm introduce Latent Diffusion Models (LDMs). The main idea is to perform diffusion in a compressed latent space rather than directly on the original image. The authors divide the approach into two main parts: perceptual compression and semantic generation.
+To address the computational cost of pixel-space diffusion, Rombach et al. @rombach2022ldm introduce LDM. The main idea is to perform diffusion in a compressed latent space rather than directly on the original image. The authors divide the approach into two main parts: perceptual compression and semantic generation.
 
 First, an autoencoder compresses the input image into a lower-dimensional latent representation. This representation is designed to preserve important visual information while reducing the amount of data that needs to be processed. The diffusion model then learns to add and remove noise in this latent space. After the denoising process is finished, a decoder converts the generated latent representation back into an image.
 

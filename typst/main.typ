@@ -13,7 +13,7 @@
       #set text(size: 8.5pt, fill: luma(110))
       CS420 Seminar Research Report — Topic [S06]: Diffusion Models
       #h(1fr)
-      _From Adding Noise to Generating Images_
+      From Adding Noise to Generating Images
       #v(-5pt)
       #line(length: 100%, stroke: 0.4pt + luma(190))
     ]

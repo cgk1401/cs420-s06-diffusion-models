@@ -19,15 +19,15 @@
       columns: (1fr, 1fr, 1fr),
       gutter: 12pt,
       [
-        *Thanh Huu Nguyen* \
+        Thanh Huu Nguyen \
         #text(size: 9pt, fill: luma(80))[Student ID: 24125030]
       ],
       [
-        *Manh Cuong Do* \
+        Manh Cuong Do \
         #text(size: 9pt, fill: luma(80))[Student ID: 24125054]
       ],
       [
-        *Thi Thanh Huyen Phan* \
+        Thi Thanh Huyen Phan \
         #text(size: 9pt, fill: luma(80))[Student ID: 24125031]
       ],
     )
@@ -46,7 +46,7 @@
     #set text(size: 9.5pt)
     #v(4pt)
     #text(size: 9.2pt)[
-      *Index Terms*—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
+      Index Terms—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
     ]
   ]
 
