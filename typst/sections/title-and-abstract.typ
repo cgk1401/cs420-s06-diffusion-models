@@ -20,12 +20,12 @@
       columns: (1fr, 1fr, 1fr),
       gutter: 12pt,
       [
-        *Author Name 1* \
-        #text(size: 9pt, fill: luma(80))[Student ID: XXXXXXXX]
+        *Thanh Huu Nguyen* \
+        #text(size: 9pt, fill: luma(80))[Student ID: 24125030]
       ],
       [
-        *Author Name 2* \
-        #text(size: 9pt, fill: luma(80))[Student ID: XXXXXXXX]
+        *Manh Cuong Do* \
+        #text(size: 9pt, fill: luma(80))[Student ID: 24125054]
       ],
       [
         *Thi Thanh Huyen Phan* \
@@ -35,7 +35,6 @@
     #v(6pt)
     #text(size: 9.2pt)[
       Faculty of Information Technology, University of Science, VNU-HCM, Ho Chi Minh City, Vietnam \
-      `{author1, author2, author3}@student.hcmus.edu.vn`
     ]
   ]
 

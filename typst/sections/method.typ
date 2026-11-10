@@ -1,10 +1,10 @@
 #import "../helpers.typ": guideline, fig-placeholder
 
+#set math.equation(numbering: "(1)")
+
 = Method and Worked Example
 
-#guideline("Section 3 | Target: ~2.5–3.0 pages | Tasks 2, 3, 5 & Section III | Rubric: Algorithms & Equations (15 pts)")[
-  Present the mathematical framework, symbol definitions, modeling assumptions, bidirectional diagrams, step-by-step numerical calculation, and LDM pipeline.
-]
+
 
 == DDPM: Forward Noising and Reverse Denoising
 
@@ -160,102 +160,92 @@ Here, $W_Q^((i))$, $W_K^((i))$, and $W_V^((i))$ are learned projection matrices 
 #figure(
   caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5)],
 )[
-  #rect(width: 100%, stroke: 0.6pt + luma(120), inset: 10pt, radius: 4pt, fill: luma(250))[
-    #set text(size: 8.2pt)
+  #rect(width: 100%, stroke: 0.8pt + luma(50), inset: 8pt, radius: 4pt, fill: luma(252))[
+    #set text(size: 8pt, fill: luma(20))
     #grid(
       columns: (1fr),
       gutter: 8pt,
       [
         #align(center)[
-          *Perceptual Compression & Reconstruction (Pixel <-> Latent)*
+          #text(weight: "bold", size: 8.5pt)[1. Perceptual Compression (Pixel Space $arrow.r.l$ Latent Space)]
         ]
-        #v(2pt)
+        #v(1pt)
         #grid(
-          columns: (1.1fr, auto, 1.2fr, auto, 1.1fr),
+          columns: (1.1fr, auto, 1.1fr, auto, 1.1fr),
           align: center + horizon,
-          gutter: 4pt,
+          gutter: 6pt,
           [
-            #rect(fill: rgb("e8f4f8"), stroke: 0.8pt + rgb("2b7bba"), radius: 3pt, inset: 5pt)[
-              *Pixel Image $x$* \
-              $H times W times 3$
+            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
+              *Image $x$* \
+              #text(size: 7pt)[$H times W times 3$]
             ]
           ],
           [
-            #text(size: 10pt, fill: rgb("2b7bba"))[$-->$] \
-            #text(size: 6.5pt, fill: rgb("2b7bba"))[Encoder $cal(E)$]
+            #text(size: 9pt)[$-->$] \
+            #text(size: 7pt)[$cal(E)$ (Encoder)]
           ],
           [
-            #rect(fill: rgb("fff8e7"), stroke: 0.8pt + rgb("d35400"), radius: 3pt, inset: 5pt)[
-              *Latent Code $z_0$* \
-              $h times w times c$ \
-              #text(size: 6.5pt, fill: luma(100))[(Factor $f = H/h$)]
+            #rect(fill: luma(238), stroke: 0.9pt + luma(30), radius: 3pt, inset: 5pt)[
+              *Latent $z_0$* \
+              #text(size: 7pt)[$h times w times c$]
             ]
           ],
           [
-            #text(size: 10pt, fill: rgb("27ae60"))[$-->$] \
-            #text(size: 6.5pt, fill: rgb("27ae60"))[Decoder $cal(D)$]
+            #text(size: 9pt)[$-->$] \
+            #text(size: 7pt)[$cal(D)$ (Decoder)]
           ],
           [
-            #rect(fill: rgb("e8f8f5"), stroke: 0.8pt + rgb("27ae60"), radius: 3pt, inset: 5pt)[
-              *Reconstructed $tilde(x)$* \
-              $H times W times 3$
+            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
+              *Output $tilde(x)$* \
+              #text(size: 7pt)[$H times W times 3$]
             ]
           ]
         )
       ],
       [
-        #line(length: 100%, stroke: 0.4pt + luma(180))
+        #line(length: 100%, stroke: 0.5pt + luma(180))
       ],
       [
         #align(center)[
-          *Latent Diffusion Process & Cross-Attention Conditioning*
+          #text(weight: "bold", size: 8.5pt)[2. Latent Diffusion & Cross-Attention Conditioning]
         ]
-        #v(2pt)
+        #v(1pt)
         #grid(
-          columns: (1fr, auto, 1.3fr, auto, 1fr),
+          columns: (0.9fr, auto, 1.4fr, auto, 0.9fr),
           align: center + horizon,
-          gutter: 4pt,
+          gutter: 6pt,
           [
-            #rect(fill: rgb("fff8e7"), stroke: 0.8pt + rgb("d35400"), radius: 3pt, inset: 5pt)[
+            #rect(fill: luma(238), stroke: 0.9pt + luma(30), radius: 3pt, inset: 5pt)[
               *Latent $z_0$* \
-              $cal(E)(x)$
+              #text(size: 7pt)[$z_0 = cal(E)(x)$]
             ]
           ],
           [
-            #text(size: 9pt, fill: rgb("c0392b"))[$<-->$] \
-            #text(size: 6.5pt, fill: rgb("c0392b"))[Diffusion $q / p_theta$]
+            #text(size: 9pt)[$<-->$] \
+            #text(size: 7pt)[Diffusion $q / p_theta$]
           ],
           [
-            #rect(fill: rgb("f3e5f5"), stroke: 0.8pt + rgb("8e44ad"), radius: 3pt, inset: 6pt)[
-              *Denoising U-Net $epsilon_theta (z_t, t, tau_theta (y))$* \
+            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 6pt)[
+              *Denoising U-Net $epsilon_theta(z_t, t)$* \
               #v(2pt)
-              #rect(fill: rgb("ffffff"), stroke: 0.5pt + rgb("8e44ad"), radius: 2pt, inset: 3pt)[
-                *Cross-Attention Layer* \
-                $Q = W_Q phi_i (z_t), quad K = W_K tau_theta (y), quad V = W_V tau_theta (y)$ \
-                $"Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V$
+              #rect(fill: luma(255), stroke: 0.5pt + luma(100), radius: 2pt, inset: 3pt)[
+                *Cross-Attention* \
+                #text(size: 7pt)[$Q = W_Q phi(z_t), quad K, V = W_(K,V) tau_theta(y)$]
               ]
             ]
           ],
           [
-            #text(size: 9pt, fill: rgb("8e44ad"))[$<--$] \
-            #text(size: 6.5pt, fill: rgb("8e44ad"))[$K, V$ Tokens]
+            #text(size: 9pt)[$<--$] \
+            #text(size: 7pt)[$K, V$]
           ],
           [
-            #rect(fill: rgb("fef9e7"), stroke: 0.8pt + rgb("f39c12"), radius: 3pt, inset: 5pt)[
-              *Conditioning $y$* \
-              Text / Layout / Maps \
-              #v(2pt)
-              #text(size: 6.5pt)[Encoder $tau_theta (y)$]
+            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
+              *Condition $y$* \
+              #text(size: 7pt)[Encoder $tau_theta(y)$]
             ]
           ]
         )
       ]
     )
-    #v(4pt)
-    #align(center)[
-      #text(size: 7.5pt, style: "italic", fill: luma(80))[
-        Full LDM Pipeline: Image $x$ is compressed into latent space $z_0 = cal(E)(x)$, diffusion runs in latent space on $z_t$, conditioning $y$ is encoded by $tau_theta (y)$ and injected via Cross-Attention layers inside the U-Net $epsilon_theta$, and denoised $z_0$ is decoded back to pixel space $tilde(x) = cal(D)(z_0)$
-      ]
-    ]
   ]
 ] <fig:ldm-pipeline>
