@@ -8,6 +8,11 @@
 
 == DDPM: Forward Noising and Reverse Denoising
 
+#figure(
+  image("../../figures/fig1_ddpm_chain.pdf", width: 100%),
+  caption: [Conceptual overview of the two opposing Markov chains of DDPM: the forward process that corrupts data with noise and the learned reverse process that removes it (Task 2).],
+) <fig:ddpm-chain>
+
 
 === Theoretical Framework & Modeling Assumptions
 
@@ -81,11 +86,6 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
     table.hline(stroke: 0.9pt),
   )
 ] <tab:symbols>
-
-#figure(
-  image("../../figures/fig1_ddpm_chain.pdf", width: 100%),
-  caption: [Illustration of the forward noising process $q(x_t | x_(t-1))$ and reverse denoising process $p_theta (x_(t-1) | x_t)$ (Task 2).],
-) <fig:ddpm-chain>
 
 == Step-by-Step Worked Numerical Example
 

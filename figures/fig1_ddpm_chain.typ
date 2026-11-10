@@ -1,8 +1,10 @@
 // ============================================================================
 // STANDALONE & IMPORTABLE TYPST DIAGRAM — FIGURE 1: DDPM BIDIRECTIONAL CHAIN
+// Conceptual overview only: the mathematical definitions live in Section 3.1.
 // File: figures/fig1_ddpm_chain.typ
 // Compile to PDF/PNG:
-//   python -c "import typst; typst.compile('figures/fig1_ddpm_chain.typ', output='figures/fig1_ddpm_chain.pdf')"
+//   typst compile figures/fig1_ddpm_chain.typ figures/fig1_ddpm_chain.pdf
+//   typst compile --format png --ppi 300 figures/fig1_ddpm_chain.typ "out-{p}.png"
 // ============================================================================
 
 #set page(width: 17.2cm, height: auto, margin: 0.35cm)
@@ -61,8 +63,8 @@
   )
 }
 
-// Helper: Horizontal arrow with direction ("right" or "left") and color
-#let h-arrow(dir: "right", color: rgb("#1d4ed8"), dashed: false) = {
+// Helper: Horizontal arrow with direction ("right" or "left") and tone
+#let h-arrow(dir: "right", color: luma(8%), dashed: false) = {
   let stroke-style = if dashed {
     (paint: color, thickness: 1pt, dash: "dashed")
   } else {
@@ -104,7 +106,7 @@
 #let state-card(math-label, sub-label, noise-lvl, border-color) = {
   rect(
     width: 100%,
-    fill: rgb("#ffffff"),
+    fill: luma(100%),
     stroke: 1.15pt + border-color,
     radius: 4pt,
     inset: (x: 4pt, y: 6pt),
@@ -122,17 +124,19 @@
 
 // Main exported diagram function
 #let fig-ddpm-chain() = {
-  let fwd-blue = rgb("#1e4e8c")
-  let fwd-bg = rgb("#eef4fb")
-  let rev-red = rgb("#b43c2f")
-  let rev-bg = rgb("#fdf2f0")
-  let unet-purple = rgb("#5b3a8c")
-  let unet-bg = rgb("#f5f0ff")
+  // Monochrome palette: all tones are pure grayscale (no hue).
+  // Forward chain = near-black, reverse chain = dark gray, U-Net = mid-dark gray.
+  let fwd = luma(8%)
+  let fwd-bg = luma(95%)
+  let rev = luma(32%)
+  let rev-bg = luma(90%)
+  let unet = luma(38%)
+  let unet-bg = luma(86%)
 
   block(
     width: 100%,
-    fill: rgb("#fafbfd"),
-    stroke: 0.6pt + luma(195),
+    fill: luma(97%),
+    stroke: 0.6pt + luma(70%),
     radius: 5pt,
     inset: (x: 10pt, y: 9pt),
   )[
@@ -144,184 +148,115 @@
     #rect(
       width: 100%,
       fill: fwd-bg,
-      stroke: (left: 2.8pt + fwd-blue, rest: 0.5pt + rgb("#bfd4ee")),
+      stroke: (left: 2.8pt + fwd, rest: 0.5pt + luma(72%)),
       radius: 3pt,
       inset: (x: 8pt, y: 5pt),
     )[
-      #grid(
-        columns: (auto, 1fr),
-        gutter: 8pt,
-        align: (left + horizon, right + horizon),
-        [
-          #text(weight: "bold", size: 8.4pt, fill: fwd-blue)[
-            FORWARD NOISING PROCESS (Fixed Markov Chain)
-          ] \
-          #text(size: 7.7pt, fill: luma(45))[
-            Step transition ($beta_1, dots, beta_T$): $q(x_t | x_(t-1)) = cal(N)(sqrt(1 - beta_t) x_(t-1), beta_t bold(I))$
-          ]
-        ],
-        [
-          #box(
-            fill: rgb("#ffffff"),
-            stroke: 0.6pt + fwd-blue,
-            radius: 3pt,
-            inset: (x: 7pt, y: 4pt),
-          )[
-            #align(center)[
-              #text(size: 7.5pt, fill: fwd-blue, weight: "bold")[Reparameterization Form] \
-              #v(1pt)
-              #text(size: 7.6pt)[
-                $x_t = sqrt(overline(alpha)_t) x_0 + sqrt(1 - overline(alpha)_t) epsilon, quad epsilon tilde.op cal(N)(bold(0), bold(I))$
-              ]
-            ]
-          ]
-        ]
-      )
+      #text(weight: "bold", size: 8.4pt, fill: fwd)[
+        FORWARD NOISING PROCESS
+      ] \
+      #text(size: 7.7pt, fill: luma(45))[
+        The data is progressively corrupted by Gaussian noise until it becomes indistinguishable from pure noise.
+      ]
     ]
 
-    #v(6pt)
+    #v(9pt)
 
     // ------------------------------------------------------------------------
-    // 2. CLOSED-FORM JUMP BRIDGE FROM x_0 (Col 1) TO x_t (Col 7)
-    // ------------------------------------------------------------------------
-    // Total weight of columns = 1.05 + 0.75 + 1.05 + 0.70 + 1.05 + 1.35 + 1.05 + 0.70 + 1.05 = 8.75fr
-    // Center of Col 1 (x_0) = 0.525fr; Center of Col 7 (x_t) = 6.475fr; Span = 5.95fr; Right remainder = 2.275fr
-    #grid(
-      columns: (0.525fr, 5.95fr, 2.275fr),
-      align: center,
-      [],
-      [
-        #box(width: 100%, height: 18pt)[
-          // Horizontal top dashed line
-          #place(top + left, dy: 6pt,
-            line(length: 100%, stroke: (paint: fwd-blue, thickness: 0.95pt, dash: "dashed"))
-          )
-          // Left vertical stem going down to x_0
-          #place(top + left, dy: 6pt,
-            line(start: (0pt, 0pt), end: (0pt, 12pt), stroke: (paint: fwd-blue, thickness: 0.95pt, dash: "dashed"))
-          )
-          // Right vertical stem going down to x_t with arrowhead
-          #place(top + right, dy: 6pt,
-            line(start: (0pt, 0pt), end: (0pt, 8.5pt), stroke: (paint: fwd-blue, thickness: 0.95pt, dash: "dashed"))
-          )
-          #place(bottom + right, dx: 3pt, dy: 0pt,
-            polygon(fill: fwd-blue, stroke: none, (-3pt, -4.5pt), (3pt, -4.5pt), (0pt, 0pt))
-          )
-          // Centered pill label sitting cleanly on top of the horizontal dashed line
-          #place(top + center, dy: 0pt,
-            box(
-              fill: rgb("#ffffff"),
-              stroke: 0.55pt + fwd-blue,
-              radius: 9pt,
-              inset: (x: 8pt, y: 2.5pt),
-            )[
-              #text(size: 7.5pt, fill: fwd-blue)[
-                *Closed-Form Direct Jump (1 Step):* $q(x_t | x_0) = cal(N)(sqrt(overline(alpha)_t) x_0, (1 - overline(alpha)_t) bold(I))$
-              ]
-            ]
-          )
-        ]
-      ],
-      []
-    )
-
-    #v(2pt)
-
-    // ------------------------------------------------------------------------
-    // 3. MIDDLE CHAIN: STATE NODES & BIDIRECTIONAL ARROWS
+    // 2. MIDDLE CHAIN: STATE NODES & BIDIRECTIONAL ARROWS
     // ------------------------------------------------------------------------
     #grid(
-      columns: (1.05fr, 0.75fr, 1.05fr, 0.70fr, 1.05fr, 1.35fr, 1.05fr, 0.70fr, 1.05fr),
+      columns: (1.00fr, 0.95fr, 1.00fr, 0.85fr, 1.00fr, 1.30fr, 1.00fr, 0.85fr, 1.00fr),
       align: center + horizon,
       gutter: 2pt,
 
       // Node x_0
-      state-card([$x_0$], [Clean Data \ $x_0 tilde.op q(x_0)$], 0.0, fwd-blue),
+      state-card([$x_0$], [Clean Data], 0.0, fwd),
 
       // Arrow x_0 <-> x_1
       [
-        #text(size: 7.4pt, fill: fwd-blue)[$q(x_1 | x_0)$]
+        #text(size: 7.4pt, fill: fwd)[add noise]
         #v(2pt)
-        #h-arrow(dir: "right", color: fwd-blue)
+        #h-arrow(dir: "right", color: fwd)
         #v(8pt)
-        #h-arrow(dir: "left", color: rev-red)
+        #h-arrow(dir: "left", color: rev)
         #v(2pt)
-        #text(size: 7.4pt, fill: rev-red)[$p_theta (x_0 | x_1)$]
+        #text(size: 6.6pt, fill: rev)[remove noise]
       ],
 
       // Node x_1
-      state-card([$x_1$], [Slight Noise \ ($t = 1$)], 0.18, luma(130)),
+      state-card([$x_1$], [Slight Noise], 0.18, luma(130)),
 
       // Dots 1 <-> t-1
       [
-        #text(size: 7pt, fill: fwd-blue)[$+ beta_t$]
+        #text(size: 7pt, fill: fwd)[add noise]
         #v(2pt)
-        #h-arrow(dir: "right", color: fwd-blue, dashed: true)
+        #h-arrow(dir: "right", color: fwd, dashed: true)
         #v(3pt)
         #text(size: 10pt, weight: "bold", fill: luma(90))[$dots.c$]
         #v(3pt)
-        #h-arrow(dir: "left", color: rev-red, dashed: true)
+        #h-arrow(dir: "left", color: rev, dashed: true)
         #v(2pt)
-        #text(size: 7pt, fill: rev-red)[$- epsilon_theta$]
+        #text(size: 6.6pt, fill: rev)[remove noise]
       ],
 
       // Node x_{t-1}
-      state-card([$x_(t-1)$], [Noisy State \ (Step $t - 1$)], 0.48, luma(110)),
+      state-card([$x_(t-1)$], [Noisy State], 0.48, luma(110)),
 
       // Key Highlighted Transition x_{t-1} <-> x_t
       [
         #box(
           fill: fwd-bg,
-          stroke: 0.45pt + fwd-blue,
+          stroke: 0.45pt + fwd,
           radius: 2pt,
           inset: (x: 3.5pt, y: 2pt),
         )[
-          #text(size: 7.5pt, weight: "bold", fill: fwd-blue)[$q(x_t | x_(t-1))$]
+          #text(size: 7.5pt, weight: "bold", fill: fwd)[add noise]
         ]
         #v(2pt)
-        #h-arrow(dir: "right", color: fwd-blue)
+        #h-arrow(dir: "right", color: fwd)
         #v(10pt)
-        #h-arrow(dir: "left", color: rev-red)
+        #h-arrow(dir: "left", color: rev)
         #v(2pt)
         #box(
           fill: rev-bg,
-          stroke: 0.45pt + rev-red,
+          stroke: 0.45pt + rev,
           radius: 2pt,
           inset: (x: 3.5pt, y: 2pt),
         )[
-          #text(size: 7.5pt, weight: "bold", fill: rev-red)[$p_theta (x_(t-1) | x_t)$]
+          #text(size: 7.5pt, weight: "bold", fill: rev)[remove noise]
         ]
       ],
 
       // Node x_t
-      state-card([$x_t$], [Noisy State \ (Step $t$)], 0.68, rev-red),
+      state-card([$x_t$], [Noisy State], 0.68, rev),
 
       // Dots t <-> T
       [
-        #text(size: 7pt, fill: fwd-blue)[$+ beta_t$]
+        #text(size: 7pt, fill: fwd)[add noise]
         #v(2pt)
-        #h-arrow(dir: "right", color: fwd-blue, dashed: true)
+        #h-arrow(dir: "right", color: fwd, dashed: true)
         #v(3pt)
         #text(size: 10pt, weight: "bold", fill: luma(90))[$dots.c$]
         #v(3pt)
-        #h-arrow(dir: "left", color: rev-red, dashed: true)
+        #h-arrow(dir: "left", color: rev, dashed: true)
         #v(2pt)
-        #text(size: 7pt, fill: rev-red)[$- epsilon_theta$]
+        #text(size: 6.6pt, fill: rev)[remove noise]
       ],
 
       // Node x_T
-      state-card([$x_T$], [Pure Noise \ $cal(N)(bold(0), bold(I))$], 1.0, rev-red),
+      state-card([$x_T$], [Pure Noise], 1.0, rev),
     )
 
-    #v(7pt)
+    #v(9pt)
 
     // ------------------------------------------------------------------------
-    // 4. BOTTOM PANEL: REVERSE DENOISING & U-NET NOISE PREDICTOR
+    // 3. BOTTOM PANEL: REVERSE DENOISING & U-NET NOISE PREDICTOR
     // ------------------------------------------------------------------------
     #rect(
       width: 100%,
       fill: rev-bg,
-      stroke: (left: 2.8pt + rev-red, rest: 0.5pt + rgb("#eebfb8")),
+      stroke: (left: 2.8pt + rev, rest: 0.5pt + luma(80%)),
       radius: 3pt,
       inset: (x: 8pt, y: 5pt),
     )[
@@ -330,26 +265,24 @@
         gutter: 8pt,
         align: (left + horizon, right + horizon),
         [
-          #text(weight: "bold", size: 8.4pt, fill: rev-red)[
-            REVERSE DENOISING PROCESS (Learned Sequential Chain)
+          #text(weight: "bold", size: 8.4pt, fill: rev)[
+            REVERSE DENOISING PROCESS
           ] \
           #text(size: 7.7pt, fill: luma(45))[
-            Iterative step ($T arrow.r 0$, no skip): $p_theta (x_(t-1) | x_t) = cal(N)(x_(t-1); mu_theta (x_t, t), sigma_t^2 bold(I))$
+            A U-Net removes the noise one step at a time, turning pure noise back into a sample.
           ]
         ],
         [
           #box(
             fill: unet-bg,
-            stroke: 0.65pt + unet-purple,
+            stroke: 0.65pt + unet,
             radius: 3pt,
             inset: (x: 7pt, y: 4pt),
           )[
             #align(center)[
-              #text(size: 7.5pt, weight: "bold", fill: unet-purple)[U-Net Noise Predictor $epsilon_theta (x_t, t)$] \
+              #text(size: 7.5pt, weight: "bold", fill: unet)[U-Net predicts the noise] \
               #v(1pt)
-              #text(size: 7.6pt)[
-                $L_("simple") = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^2 ]$
-              ]
+              #text(size: 7.6pt)[$epsilon_theta (x_t, t)$]
             ]
           ]
         ]
