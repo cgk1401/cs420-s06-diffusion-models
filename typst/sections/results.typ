@@ -1,19 +1,7 @@
-#import "../helpers.typ": guideline, fig-placeholder
 
 = Results and Discussion
 
-#guideline("Section 4 | Target: ~2.5–3.0 pages | Tasks 4, 6 & Section IV | Rubric: Evidence (10 pts) + Critical Analysis (10 pts)")[
-  *Important (Section VI):* Clearly separate results from your team's own demonstrations (Section 4.1) and benchmark metrics cited from the original papers (Section 4.2).
-]
-
 == Team Illustrative Experiments
-
-#guideline("Task 4 & Section IV (Minimum Expected Outputs)")[
-  - *Setup:* Describe environment, small image dataset (e.g., $28 times 28$ MNIST), noise schedule, and pretrained model used (no training from scratch required).
-  - *Experiment 1 — Noise Addition at Five Noise Levels (Task 4a — Mandatory):* Show clean small image $x_0$ and five progressive noise levels (@fig:exp-results).
-  - *Experiment 2 — Denoising / Generation with Pretrained Model (Task 4b):* Demonstrate reverse denoising or sample generation if resources permit.
-  - *Experiment 3 — Pixel vs. Latent Compression Check:* Optional lightweight check comparing pixel tensor vs. VAE latent tensor dimensions and reconstruction quality.
-]
 
 === Experimental Setup and Implementation Details
 
@@ -31,11 +19,6 @@ Following the closed-form forward formulation in @eq:reparam, noisy states $x_t$
 Generation inverts this process by sequentially evaluating the learned transitions parameterized by @eq:reverse and @eq:mu_param. Starting from $x_(1000) ~ cal(N)(bold(0), bold(I))$ conditioned on $y = 3$, ancestral sampling over all $T = 1000$ steps produces the trajectory in Row 2 of @fig:exp-results. The reverse chain follows a coarse-to-fine progression: low-frequency priors emerge by $t = 700$, the dual-loop structure of digit 3 appears by $t = 400$, stroke geometry consolidates at $t = 200$, and high-frequency details sharpen by $t = 50$ until a clean digit is obtained at $t = 0$. The tracked coordinate $(10, 14)$ remains consistent across both rows, linking the numerical example in Section 3.2 to the observed pixel evolution.
 
 == Comparison: Pixel-Space vs. Latent Diffusion
-
-#guideline("Task 6a & Section IV — Mandatory Evidence-Supported Comparison")[
-  - Compare one pixel-space diffusion setting with one latent-diffusion setting using explicit criteria.
-  - Discuss *sampling speed*, *generation quality* (citing FID/IS from @ho2020ddpm @rombach2022ldm), *compute/memory cost*, and *prompt-based control*.
-]
 
 === Two-Stage Latent Diffusion Architecture
 
@@ -160,12 +143,6 @@ The two objective values are not comparable across spaces. $L_"simple"$ = 0.0210
 Quality must likewise be read at two levels. The VAE reconstructs the canonical digit at 30.10 dB, so the compression stage is not the bottleneck of the system, whereas the sample-level PSNR of 8.09 dB and 6.66 dB measures the pixel-aligned agreement of one generated image with one reference image and is too weak a proxy to rank the two models. For distributional quality we therefore cite the published FID values, 3.17 for DDPM on CIFAR-10 @ho2020ddpm and 3.60 for LDM-4 on ImageNet @rombach2022ldm, which were not reproduced here. Finally, the conditioning interfaces differ in kind: the pixel model adds the class embedding to the time-embedding path, while the latent model routes it through cross-attention, the mechanism shown in @fig:exp-ldm-cond to steer one shared noise towards three distinct digits. That interface is what allows @rombach2022ldm to condition on text and layout, although our implementation exercises class tokens only.
 
 == Critical Analysis and Limitations
-
-#guideline("Task 6b & Rubric: Critical Analysis and Limitations (10 pts)")[
-  - *Technical Limitations:* Sequential multi-step sampling latency; VAE perceptual compression bottleneck at high downsampling factors (fine details/text).
-  - *Data, Copyright, and Bias (Mandatory — Task 6):* Discuss issues regarding web-scraped *training data*, *copyright* / style memorization, and demographic/cultural *bias*.
-  - *Scope of Team Experiments:* Note the illustrative scope of the small-scale experiments without overstating conclusions.
-]
 
 === Technical Limitations and Scope of the Experiments
 

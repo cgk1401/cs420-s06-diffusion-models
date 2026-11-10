@@ -1,10 +1,7 @@
-#import "../helpers.typ": guideline, fig-placeholder
 
 #set math.equation(numbering: "(1)")
 
 = Method and Worked Example
-
-
 
 == DDPM: Forward Noising and Reverse Denoising
 
@@ -12,7 +9,6 @@
   image("../../figures/fig1_ddpm_chain.pdf", width: 100%),
   caption: [Conceptual overview of the two opposing Markov chains of DDPM: the forward process that corrupts data with noise and the learned reverse process that removes it (Task 2).],
 ) <fig:ddpm-chain>
-
 
 === Theoretical Framework & Modeling Assumptions
 
@@ -89,8 +85,6 @@ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^
 
 == Step-by-Step Worked Numerical Example
 
-
-
 The numerical example uses the MNIST test set and selects the first image labeled as the digit `3`, whose raw pixel intensities $I_0 in [0, 255]$ are normalized to $x_0 in [-1, 1]$ using $x_0 = I_0 / 127.5 - 1$; the variance schedule follows the method of Ho and colleagues (2020) with $T = 1000$, $beta_1 = 0.0001$, and $beta_T = 0.02$, and a fixed random seed of `42` is used for both NumPy and PyTorch, while the calculation uses the pixel at row $10$ and column $14$ from the central foreground region; its raw intensity is $236$ and its normalized value is:
 
 $ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
@@ -123,7 +117,10 @@ The single-pixel error is one contribution to this image-level mean, while train
 
 == Latent Diffusion Models (LDM) <sec:ldm>
 
-
+#figure(
+  image("../figures/fig2_ldm_pipeline.pdf", width: 100%),
+  caption: [The two stages of Latent Diffusion Models: perceptual compression into a small latent code, and denoising in the latent space under cross-attention conditioning (Task 5).],
+) <fig:ldm-pipeline>
 
 To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling
 
@@ -157,95 +154,4 @@ $ "Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V $ <eq:crossattn>
 
 Here, $W_Q^((i))$, $W_K^((i))$, and $W_V^((i))$ are learned projection matrices and $d$ is the projection dimension; the matrix $Q K^T in bb(R)^(N times M)$ measures the relationship between each spatial location and each conditioning token, allowing the generated content to reflect the input prompt or layout
 
-#figure(
-  caption: [Overall pipeline of Latent Diffusion Models with VAE compression and cross-attention conditioning (Task 5)],
-)[
-  #rect(width: 100%, stroke: 0.8pt + luma(50), inset: 8pt, radius: 4pt, fill: luma(252))[
-    #set text(size: 8pt, fill: luma(20))
-    #grid(
-      columns: (1fr),
-      gutter: 8pt,
-      [
-        #align(center)[
-          #text(weight: "bold", size: 8.5pt)[1. Perceptual Compression (Pixel Space $arrow.r.l$ Latent Space)]
-        ]
-        #v(1pt)
-        #grid(
-          columns: (1.1fr, auto, 1.1fr, auto, 1.1fr),
-          align: center + horizon,
-          gutter: 6pt,
-          [
-            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
-              *Image $x$* \
-              #text(size: 7pt)[$H times W times 3$]
-            ]
-          ],
-          [
-            #text(size: 9pt)[$-->$] \
-            #text(size: 7pt)[$cal(E)$ (Encoder)]
-          ],
-          [
-            #rect(fill: luma(238), stroke: 0.9pt + luma(30), radius: 3pt, inset: 5pt)[
-              *Latent $z_0$* \
-              #text(size: 7pt)[$h times w times c$]
-            ]
-          ],
-          [
-            #text(size: 9pt)[$-->$] \
-            #text(size: 7pt)[$cal(D)$ (Decoder)]
-          ],
-          [
-            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
-              *Output $tilde(x)$* \
-              #text(size: 7pt)[$H times W times 3$]
-            ]
-          ]
-        )
-      ],
-      [
-        #line(length: 100%, stroke: 0.5pt + luma(180))
-      ],
-      [
-        #align(center)[
-          #text(weight: "bold", size: 8.5pt)[2. Latent Diffusion & Cross-Attention Conditioning]
-        ]
-        #v(1pt)
-        #grid(
-          columns: (0.9fr, auto, 1.4fr, auto, 0.9fr),
-          align: center + horizon,
-          gutter: 6pt,
-          [
-            #rect(fill: luma(238), stroke: 0.9pt + luma(30), radius: 3pt, inset: 5pt)[
-              *Latent $z_0$* \
-              #text(size: 7pt)[$z_0 = cal(E)(x)$]
-            ]
-          ],
-          [
-            #text(size: 9pt)[$<-->$] \
-            #text(size: 7pt)[Diffusion $q / p_theta$]
-          ],
-          [
-            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 6pt)[
-              *Denoising U-Net $epsilon_theta(z_t, t)$* \
-              #v(2pt)
-              #rect(fill: luma(255), stroke: 0.5pt + luma(100), radius: 2pt, inset: 3pt)[
-                *Cross-Attention* \
-                #text(size: 7pt)[$Q = W_Q phi(z_t), quad K, V = W_(K,V) tau_theta(y)$]
-              ]
-            ]
-          ],
-          [
-            #text(size: 9pt)[$<--$] \
-            #text(size: 7pt)[$K, V$]
-          ],
-          [
-            #rect(fill: luma(245), stroke: 0.7pt + luma(50), radius: 3pt, inset: 5pt)[
-              *Condition $y$* \
-              #text(size: 7pt)[Encoder $tau_theta(y)$]
-            ]
-          ]
-        )
-      ]
-    )
-  ]
-] <fig:ldm-pipeline>
+The two stages of this architecture are summarised in @fig:ldm-pipeline: the first stage compresses the image into a small latent code and rebuilds it from that code alone, whereas the second stage carries out the diffusion process inside that latent code under the guidance of the conditioning signal.

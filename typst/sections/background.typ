@@ -1,4 +1,3 @@
-#import "../helpers.typ": guideline, fig-placeholder
 
 = Background and Paper Review
 == Discriminative vs. Generative Models
@@ -16,7 +15,6 @@ Autoregressive models generate data one component at a time by using conditional
 Variational Autoencoders (VAEs) work by learning how to compress data into a latent representation and then reconstruct it using a decoder. Once trained, the decoder can also be used to generate new samples. VAEs usually have stable training and relatively fast sampling. However, their generated images may sometimes look less sharp compared with those produced by other generative models @kingma2014vae.
 
 Diffusion Models take another approach. They learn to generate images by gradually removing noise over multiple steps. Starting from random noise, the model repeatedly predicts and removes noise until an image is formed. This method can produce detailed and diverse images without using the adversarial training process of GANs. The main disadvantage is that image generation is relatively slow because the model needs to perform many denoising steps @sohl2015deep @ho2020ddpm.
-
 
 Table @tab:gen-comparison summarizes the main differences between these generative approaches. These comparisons describe general characteristics rather than fixed results, since the actual performance of each model can depend on the dataset, architecture, and evaluation conditions.
 
