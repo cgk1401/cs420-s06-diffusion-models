@@ -1,7 +1,7 @@
 
 #set document(
   title: "Diffusion Models: From Adding Noise to Generating Images",
-  author: ("Author Name 1", "Author Name 2", "Author Name 3"),
+  author: ("Thanh Huu Nguyen", "Manh Cuong Do", "Thi Thanh Huyen Phan"),
 )
 
 #set page(
@@ -21,7 +21,7 @@
 )
 
 #set text(
-  font: ("New Computer Modern", "Linux Libertine"),
+  font: "New Computer Modern",
   size: 10.5pt,
   lang: "en",
 )
@@ -65,4 +65,3 @@
 
 #pagebreak()
 #bibliography("references.bib", title: "References", style: "ieee")
-#include "sections/appendix.typ"

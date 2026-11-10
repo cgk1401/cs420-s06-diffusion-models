@@ -1,3 +1,5 @@
+﻿= Conclusion
 
-= Conclusion
+Learning to remove noise can support image generation because a denoiser learns statistical structure shared by training images at different noise levels. During sampling, this information guides a sequence of transitions from random noise toward the learned data distribution. DDPM demonstrates this approach in pixel space, while LDM applies it to a compressed representation and decodes the generated latent into an image. Conditioning provides additional information about the desired output, although our implementation tests class labels rather than text prompts.
 
+The worked example and five noise levels illustrate how the signal decreases as Gaussian noise is added. The saved MNIST runs also show that a smaller latent representation can reduce counted U-Net arithmetic substantially. However, the recorded latent sampling time is slightly higher, and training requires an additional VAE stage. These observations show why representation size, actual latency, preprocessing, and reconstruction should be considered separately. They do not establish a quality ranking or predict full-scale performance. Within these limits, the report explains the main mechanisms of diffusion and the practical trade-offs involved in moving from pixels to latent space.

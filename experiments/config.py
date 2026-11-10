@@ -45,4 +45,6 @@ FORWARD_LABELS_5 = ["t = 50", "t = 200", "t = 400", "t = 700", "t = 1000"]
 
 # Reverse denoising observation steps for Task 4b
 REVERSE_STEPS_SHOW = [999, 699, 399, 199, 49, 0]
-REVERSE_LABELS_SHOW = ["t = 1000", "t = 700", "t = 400", "t = 200", "t = 50", "t = 0"]
+# The initial state is recorded before the first transition. Other snapshots
+# are recorded after transition index k and therefore represent state x_k.
+REVERSE_LABELS_SHOW = ["t = 1000", "t = 699", "t = 399", "t = 199", "t = 49", "t = 0"]

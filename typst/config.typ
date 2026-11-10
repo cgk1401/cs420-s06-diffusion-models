@@ -1,1 +1,1 @@
-#let show-guidelines = true
+﻿#let show-guidelines = false

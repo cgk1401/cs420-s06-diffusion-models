@@ -1,160 +1,152 @@
-
-#set math.equation(numbering: "(1)")
-
 = Method and Worked Example
-
 == DDPM: Forward Noising and Reverse Denoising
 
-#figure(
-  image("../../figures/fig1_ddpm_chain.pdf", width: 100%),
-  caption: [Conceptual overview of the two opposing Markov chains of DDPM: the forward process that corrupts data with noise and the learned reverse process that removes it (Task 2).],
-) <fig:ddpm-chain>
+=== Definitions and Forward Process
 
-=== Theoretical Framework and Modeling Assumptions
-
-DDPM define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free forward diffusion process that systematically degrades data into isotropic Gaussian noise, and a parameterized reverse process that learns to invert this degradation to synthesize novel samples. The principal mathematical notations, parameter definitions, and variable ranges used throughout this framework are summarized in @tab:symbols.
+We follow Ho et al. @ho2020ddpm (Sections 2-3). A clean image is a vector $x_0$ with $D = H times W times C$ coordinates, where $H$, $W$, and $C$ denote height, width, and channels. Integer intensities are scaled by $x_0 = x_"raw" / 127.5 - 1$ into $[-1, 1]^D$. This sets a consistent numerical range; it does not guarantee zero empirical mean or unit variance. The states after noising lie in $bb(R)^D$, so noisy coordinates need not remain in that interval. The principal symbols are defined in @tab:symbols.
 
 #figure(
   kind: table,
-  caption: [Symbol definitions, value ranges, and roles in the DDPM framework.],
+  caption: [Notation used in the DDPM equations, following @ho2020ddpm. All scaled intensities, noise coordinates, and variances are dimensionless.],
   {
-    set text(size: 9.2pt)
+    set text(size: 9pt)
+    set par(justify: false, first-line-indent: 0pt)
     table(
-      columns: (0.9fr, 2.2fr, 1.3fr),
-      align: (left, left, left),
-      stroke: none,
-      inset: (x: 6pt, y: 5pt),
-      table.hline(stroke: 0.9pt),
-      [Symbol], [Definition and role], [Range / units],
-      table.hline(stroke: 0.5pt),
-      [$x_0$], [Clean normalized input data], [$[-1, 1]^D$],
-      [$x_t, x_(t-1)$], [Noisy latent states at timesteps $t, t-1$], [$bb(R)^D$],
-      [$t, T$], [Discrete diffusion timestep and total steps], [$t in {1, ..., T}, T = 1000$],
-      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in [10^(-4), 0.02]$],
-      [$alpha_t, overline(alpha)_t$], [Signal scaling coefficients ($alpha_t = 1 - beta_t$, $overline(alpha)_t = product_(s=1)^t alpha_s$)], [$(0, 1)$],
-      [$bold(I)$], [Identity covariance matrix], [$bb(R)^(D times D)$],
-      [$epsilon$], [Standard isotropic Gaussian noise], [$epsilon ~ cal(N)(bold(0), bold(I))$],
-      [$epsilon_theta (x_t, t)$], [Parameterized neural noise predictor (U-Net)], [$bb(R)^D$],
-      table.hline(stroke: 0.9pt),
+      columns: (1.1fr, 3fr), stroke: none, align: left, inset: 4pt,
+      table.hline(stroke: 0.8pt), [Symbol], [Meaning and range], table.hline(stroke: 0.4pt),
+      [$q_"data", x_0$], [Data distribution and clean sample $x_0 ~ q_"data"$ in $[-1,1]^D$.],
+      [$q, p_theta, theta$], [Fixed forward distribution, learned generative distribution, and trainable real-valued network parameters.],
+      [$t, T$], [Discrete step $t in {1,...,T}$; $T = 1000$ in our experiments.],
+      [$beta_t, alpha_t$], [Forward variance $0 < beta_t < 1$; $alpha_t = 1 - beta_t$.],
+      [$overline(alpha)_t$], [Product $product_(s=1)^t alpha_s$, with $overline(alpha)_0 = 1$.],
+      [$bold(I), epsilon$], [$D times D$ identity matrix and independent noise $epsilon ~ cal(N)(bold(0),bold(I))$.],
+      [$epsilon_theta, mu_theta, sigma_t^2$], [Predicted noise and reverse mean in $bb(R)^D$, and fixed reverse variance $sigma_t^2 >= 0$.],
+      [$bb(E), norm(v)^2$], [Expectation over stated random draws; squared Euclidean norm $sum_(j=1)^D v_j^2$.],
+      table.hline(stroke: 0.8pt),
     )
   },
 ) <tab:symbols>
 
-=== Data Scaling and Preprocessing Assumptions
+The forward process adds independent Gaussian increments. Following Eqs. (2) and (4) of @ho2020ddpm,
 
-Image data consisting of discrete pixel intensities $x_"raw" in {0, 1, ..., 255}^D$ (where $D = H times W times C$) is scaled linearly to the continuous interval $[-1, 1]^D$:
+$ q(x_(1:T) | x_0) = product_(t=1)^T q(x_t | x_(t-1)), quad
+  q(x_t | x_(t-1)) = cal(N)(x_t; sqrt(1-beta_t) x_(t-1), beta_t bold(I)). $ <eq:forward>
 
-$ x_0 = (x_"raw") / 127.5 - 1 $
+Here $cal(N)(x;mu,Sigma)$ denotes a Gaussian density evaluated at $x$, with mean $mu$ and covariance $Sigma$. The experiments use the linear schedule $beta_t = 10^(-4) + (t-1)(0.02-10^(-4))/(T-1)$. Thus $sqrt(beta_t)$ is the standard deviation of one noise increment. Small steps motivate a Gaussian approximation for learned reverse transitions; they do not make the exact reverse conditional Gaussian for arbitrary data.
 
-This normalization ensures that the input signal $x_0$ is centered at zero with coordinate-wise variance consistent with the standard Gaussian prior $p(x_T) = cal(N)(bold(0), bold(I))$, preventing numerical instabilities during neural network processing.
+The accumulated forward noise has a closed form:
 
-=== Forward Process and $beta$ Schedule
+$ q(x_t | x_0) = cal(N)(x_t; sqrt(overline(alpha)_t) x_0, (1-overline(alpha)_t) bold(I)), $ <eq:closedform>
+$ x_t = sqrt(overline(alpha)_t) x_0 + sqrt(1-overline(alpha)_t) epsilon. $ <eq:reparam>
 
-The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to the variance schedule $beta_1, ..., beta_T$ (summarized in @tab:symbols):
+For this finite schedule, $overline(alpha)_(1000) approx 4.0358 times 10^(-5)$ and the signal coefficient is approximately $0.00635$. The terminal state is therefore close to standard Gaussian noise, with a small residual dependence on the image. The forward distribution is fixed rather than learned. @fig:ddpm-chain illustrates both directions.
 
-$ q(x_(1:T) | x_0) = product_(t=1)^T q(x_t | x_(t-1)), quad q(x_t | x_(t-1)) = cal(N)(x_t; sqrt(1 - beta_t) x_(t-1), beta_t bold(I)) $ <eq:forward>
+#figure(
+  image("../figures/fig1_ddpm_chain.pdf", width: 100%),
+  caption: [Conceptual forward and reverse chains, drawn by the authors based on @ho2020ddpm, Figure 2. The small grids are stylized illustrations, not Gaussian simulations. Reverse sampling generates a new sample rather than recovering a particular original image.],
+) <fig:ddpm-chain>
 
-The variance hyperparameters are constrained to $beta_t in (0, 1)$ and increase linearly across $T = 1000$ timesteps, ranging from $beta_1 = 10^(-4)$ to $beta_T = 0.02$. Choosing small $beta_t$ relative to the unit-scaled data bounds the entropy change per step, ensuring that the reverse transitions retain the same functional Gaussian form as the forward steps.
+=== Reverse Model and Noise-Prediction Objective
 
-A key property of the forward process is its ability to sample the noisy state $x_t$ at any arbitrary timestep $t$ directly from $x_0$ in closed form. Defining $alpha_t := 1 - beta_t$ and $overline(alpha)_t := product_(s=1)^t alpha_s$, the conditional distribution marginalizes to:
+The learned model starts from $p(x_T)=cal(N)(bold(0),bold(I))$ and uses
 
-$ q(x_t | x_0) = cal(N)(x_t; sqrt(overline(alpha)_t) x_0, (1 - overline(alpha)_t) bold(I)) $ <eq:closedform>
+$ p_theta(x_(0:T)) = p(x_T) product_(t=1)^T p_theta(x_(t-1)|x_t), quad
+  p_theta(x_(t-1)|x_t)=cal(N)(x_(t-1);mu_theta(x_t,t),sigma_t^2 bold(I)). $ <eq:reverse>
 
-Using the reparameterization trick, any noisy state $x_t$ can be expressed directly as a linear combination of the clean signal $x_0$ and a standard Gaussian noise vector $epsilon ~ cal(N)(bold(0), bold(I))$:
+For $t>1$, the posterior conditioned on the clean image is Gaussian. Its mean and variance, from Eq. (7) of @ho2020ddpm, are
 
-$ x_t (x_0, epsilon) = sqrt(overline(alpha)_t) x_0 + sqrt(1 - overline(alpha)_t) epsilon $ <eq:reparam>
+$ tilde(mu)_t(x_t,x_0) = frac(sqrt(overline(alpha)_(t-1)) beta_t,1-overline(alpha)_t)x_0
+ + frac(sqrt(alpha_t)(1-overline(alpha)_(t-1)),1-overline(alpha)_t)x_t,
+ quad tilde(beta)_t=frac(1-overline(alpha)_(t-1),1-overline(alpha)_t)beta_t. $ <eq:posterior>
 
-As $t -> T$, $overline(alpha)_T -> 0$, causing the signal $x_0$ to vanish completely so that $x_T approx cal(N)(bold(0), bold(I))$.
+We use $sigma_t^2=tilde(beta)_t$ during sampling. Noise prediction provides a convenient mean parameterization (their Eq. (11)):
 
-=== Reverse Process, Noise Predictor, and Sampling
+$ mu_theta(x_t,t)=frac(1,sqrt(alpha_t))(x_t-frac(beta_t,sqrt(1-overline(alpha)_t))epsilon_theta(x_t,t)). $ <eq:mu_param>
 
-The reverse process $p_theta (x_(0:T))$ is a learned Markov chain starting from a standard Gaussian prior $p(x_T) = cal(N)(x_T; bold(0), bold(I))$. It is parameterized by a U-Net neural network with parameters $theta$:
+This does not automatically give an unweighted loss. For intermediate steps, the negative evidence lower bound (negative ELBO), which upper-bounds negative log-likelihood, contains terms of the form
 
-$ p_theta (x_(0:T)) = p(x_T) product_(t=1)^T p_theta (x_(t-1) | x_t), quad p_theta (x_(t-1) | x_t) = cal(N)(x_(t-1); mu_theta (x_t, t), Sigma_theta (x_t, t)) $ <eq:reverse>
+$ bb(E)[w_t norm(epsilon-epsilon_theta(x_t,t))^2] + "constant", quad
+ w_t=frac(beta_t^2,2 sigma_t^2 alpha_t(1-overline(alpha)_t)), quad t>1. $ <eq:weighted>
 
-To parameterize $p_theta (x_(t-1) | x_t)$, the covariance matrix is set to untrainable time-dependent constants $Sigma_theta (x_t, t) = sigma_t^2 bold(I)$, where $sigma_t^2$ is fixed to either $beta_t$ (upper bound on entropy) or $tilde(beta)_t = ((1 - overline(alpha)_(t-1)) / (1 - overline(alpha)_t)) beta_t$ (lower bound for deterministic $x_0$).
+Ho et al. deliberately discard these timestep-dependent weights to obtain their simplified objective (Eqs. (12) and (14) of @ho2020ddpm):
 
-When conditioned on $x_0$, the tractable posterior $q(x_(t-1) | x_t, x_0) = cal(N)(x_(t-1); tilde(mu)_t (x_t, x_0), tilde(beta)_t bold(I))$ has a mean of:
+$ L_"simple"=bb(E)_(t,x_0,epsilon)[norm(epsilon-epsilon_theta(x_t,t))^2]. $ <eq:lsimple>
 
-$ tilde(mu)_t (x_t, x_0) = (sqrt(overline(alpha)_(t-1)) beta_t) / (1 - overline(alpha)_t) x_0 + (sqrt(alpha_t)(1 - overline(alpha)_(t-1))) / (1 - overline(alpha)_t) x_t $
+Training samples $x_0 ~ q_"data"$, $t$ uniformly from ${1,...,T}$, and independent standard Gaussian $epsilon$. The network receives $x_t$ from @eq:reparam and $t$; an optimizer updates $theta$ to reduce the noise error. Our conditional models also receive label $y$. The code averages squared error over coordinates and the mini-batch; this rescales the sum in @eq:lsimple by a constant for each fixed representation size.
 
-Substituting $x_0 = (x_t - sqrt(1 - overline(alpha)_t) epsilon) / (sqrt(overline(alpha)_t))$ into $tilde(mu)_t$ reveals that the neural network $mu_theta (x_t, t)$ should be reparameterized to predict the noise $epsilon$ rather than the mean directly:
+Why can this generate new images? Under squared error, the optimal predictor estimates the conditional mean of the injected noise given the noisy input. Across images and noise levels, it learns statistical structure that guides reverse transitions toward likely data. It is not given the original image during generation and does not need to identify the exact noise realization that produced an arbitrary input. This is the noise-prediction connection to denoising score matching discussed by @ho2020ddpm.
 
-$ mu_theta (x_t, t) = 1 / (sqrt(alpha_t)) (x_t - (beta_t) / (sqrt(1 - overline(alpha)_t)) epsilon_theta (x_t, t)) $ <eq:mu_param>
+=== Training and Sampling Steps
 
-This reparameterization simplifies the variational lower bound (ELBO) into an unweighted mean squared error (MSE) objective over noise vectors, termed $L_"simple"$:
+The following procedures summarize Algorithms 1-2 of @ho2020ddpm.
 
-$ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^2 ] $ <eq:lsimple>
+1. Training: draw a mini-batch of clean images and labels, random timesteps, and independent noise.
+2. Form each noisy input with @eq:reparam; predict its noise using the image, timestep, and label.
+3. Average squared prediction errors, backpropagate, and update the network. Repeat over training batches.
+4. Sampling: draw $x_T ~ cal(N)(bold(0),bold(I))$, choose the label if conditional, and iterate $t=T,...,1$ using
 
-The overall transitions of the forward noising and reverse denoising Markov chains are illustrated in @fig:ddpm-chain.
+$ x_(t-1)=mu_theta(x_t,t)+sigma_t xi_t,
+ quad xi_t ~ cal(N)(bold(0),bold(I)) " for " t>1, quad xi_1=bold(0). $ <eq:sampling>
+
+Each reverse-step noise draw is independent. The implementation first estimates $hat(x)_0=(x_t-sqrt(1-overline(alpha)_t)epsilon_theta)/sqrt(overline(alpha)_t)$, clips it to $[-1,1]$, and uses this estimate in @eq:posterior. At $t=1$ it returns the clean estimate without extra noise. Thus the implemented mean includes clipping, unlike the unclipped algebraic form of @eq:mu_param. Code index $k$ denotes mathematical step $t=k+1$.
 
 == Step-by-Step Worked Numerical Example
 
-The numerical example uses the MNIST test set and selects the first image labeled as the digit 3, whose raw pixel intensities $I_0 in [0, 255]$ are normalized to $x_0 in [-1, 1]$ using $x_0 = I_0 / 127.5 - 1$; the variance schedule follows the method of Ho and colleagues (2020) with $T = 1000$, $beta_1 = 0.0001$, and $beta_T = 0.02$, and a fixed random seed of 42 is used for both NumPy and PyTorch, while the calculation uses the pixel at row $10$ and column $14$ from the central foreground region; its raw intensity is $236$ and its normalized value is:
+We use the first MNIST test image labeled 3 @mnist, with zero-based pixel coordinate $(10,14)$, following the saved output of `step0_worked_example.py`. Its raw intensity is 236. A CPU PyTorch noise draw with seed 42 supplies the selected coordinate $epsilon=-0.714962$. This is one realization, not an expected noise value. The one-dimensional forward step is calculated as follows:
 
-$ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
+1. Normalize: $x_0=236/127.5-1=0.850980$.
+2. Choose $beta_1=0.0001$, so $sqrt(1-beta_1) approx 0.999950$ and $sqrt(beta_1)=0.010000$.
+3. Calculate the conditional mean: $mu_1=0.999950 times 0.850980=0.850938$.
+4. Calculate the noise increment: $0.010000 times (-0.714962)=-0.007150$.
+5. Add the terms:
 
-The fixed seed produces Gaussian noise $epsilon = -0.714962$ at this pixel, and at timestep $t = 1$ the signal coefficient is $sqrt(1 - beta_1) = sqrt(0.9999) approx 0.999950$ while the noise standard deviation is $sqrt(beta_1) = 0.010000$; consequently, the conditional mean is $mu_1 = 0.999950 times 0.850980 = 0.850938$ and the added noise is $0.010000 times (-0.714962) = -0.007150$, yielding the noisy pixel value:
+$ x_1=0.850938-0.007150=0.843788. $ <eq:example>
 
-$ x_1 = mu_1 + sqrt(beta_1) epsilon = 0.850938 - 0.007150 = 0.843788 $ <eq-x1>
+The conditional expectation is $bb(E)[x_1|x_0]=0.850938$, because $bb(E)[epsilon]=0$; its conditional variance is $0.0001$. Repeating the experiment would give different samples around this mean. More generally, for independent noise, $"Var"(x_t)=overline(alpha)_t "Var"(x_0)+(1-overline(alpha)_t)$ for each coordinate. It equals one only if the original coordinate has unit variance; normalization alone does not imply that assumption.
 
-This result is one realization from $q(x_1 | x_0) = cal(N)(sqrt(1 - beta_1) x_0, beta_1 I)$, whose expectation is $bb(E)[x_1 | x_0] = 0.850938$; for a data distribution with unit variance and independent unit-variance noise, the marginal variance remains $(1 - beta_1) + beta_1 = 1$, while the signal contribution gradually decreases over the diffusion steps; the closed-form expression gives a later state without simulating every intermediate transition, and at $t = 50$, where $bar(alpha)_(50) = 0.971016$, the signal and noise coefficients are $0.985401$ and $0.170248$, respectively, so the noisy state is:
+At $t=50$, the recorded $overline(alpha)_(50)=0.971016$ gives
+$ x_(50)=0.985401 times 0.850980+0.170248 times (-0.714962)=0.716836. $
+Reusing the same $epsilon$ couples two valid marginal samples for illustration; it is not a sequential Markov path.
 
-$ x_(50) = 0.985401 times 0.850980 + 0.170248 times (-0.714962) = 0.716836 $
+The saved untrained U-Net output at that pixel, $[epsilon_theta(x_1,1,y=3)]_(10,14)=0.421943$, gives a residual of $-1.136905$ and squared error $1.292554$. Here $x_1$ in the predictor denotes the whole noisy image. The recorded image-level mean is
 
-Using the same example, we evaluate the simplified objective $L_"simple"$ of @eq:lsimple at timestep $t = 1$. Passing $x_1$ through the initial, untrained conditional U-Net with time and class conditioning gives predicted noise $epsilon_theta(x_1, 1) = 0.421943$, so the difference between the injected noise and the prediction is:
+$ ell_(t=1)=frac(1,784)sum_(r=0)^27 sum_(c=0)^27
+ (epsilon_(r,c)-[epsilon_theta(x_1,1,3)]_(r,c))^2=1.134913. $
 
-$ e_1 = epsilon - epsilon_theta(x_1, 1) = -0.714962 - 0.421943 = -1.136905 $
-
-Thus, the pointwise squared error for the selected pixel is:
-
-$ norm(epsilon - epsilon_theta(x_1, 1))^2 = (-1.136905)^2 = 1.292554 $
-
-For comparison, averaging the squared prediction errors across all $28 times 28 = 784$ pixels gives the image-level loss:
-
-$ L_"simple"^(t=1) = frac(1, 784) sum_(r=1)^(28) sum_(c=1)^(28) (epsilon_(r, c) - epsilon_theta(x_1, 1)_(r, c))^2 = 1.134913 $
-
-The single-pixel error is one contribution to this image-level mean, while training minimizes the corresponding noise-prediction error over sampled images, timesteps, and noise vectors
+This is a single-image, single-timestep estimate of the coordinate-averaged objective, not the full training expectation. Numerical values are rounded to six decimal places; the saved computation uses unrounded tensors.
 
 == LDM: Two-Stage Latent Diffusion <sec:ldm>
 
+Rombach et al. @rombach2022ldm (Section 3) first train an autoencoder, then train diffusion in its frozen latent space. For an image $x in bb(R)^(H times W times C)$, the encoder $cal(E)$ produces a spatial latent in $bb(R)^(h times w times c)$, where $h,w,c$ are latent height, width, and channels. The downsampling factor is $f=H/h=W/w$. Reconstruction and generation are distinct:
+
+$ z_0=cal(E)(x), quad tilde(x)=cal(D)(cal(E)(x)), quad
+ x_"gen"=cal(D)(z_0^"gen"). $ <eq:vae-dec>
+
+The generated latent $z_0^"gen"$ comes from reverse diffusion, not from encoding a particular input image. Reducing each spatial dimension by $f$ gives $f^2$ fewer spatial positions, while the scalar compression ratio also depends on channel count. For our $1 times 28 times 28$ images and $4 times 7 times 7$ latents, these reductions are $16 times$ and $4 times$, respectively.
+
+The paper uses perceptual and adversarial reconstruction terms with either mild KL regularization or vector quantization. Our smaller VAE uses only pixel MSE and KL regularization, so it is an illustrative simplification. Its encoder outputs $mu$ and $log sigma^2$ and samples $z=mu+sigma dot.o eta$, with independent $eta ~ cal(N)(bold(0),bold(I))$; $dot.o$ denotes coordinatewise multiplication. The implemented objective is
+
+$ L_"VAE"=frac(1,D)norm(x-tilde(x))^2
+ -frac(beta_"KL",2D_z)sum_(j=1)^(D_z)(1+log sigma_j^2-mu_j^2-sigma_j^2), $ <eq:lvae>
+
+where $D_z=h times w times c$, $beta_"KL"=5 times 10^(-4)$, and both terms are also averaged over the batch. A mild KL penalty regularizes the latent distribution without guaranteeing exact standard normality @kingma2014vae. For diffusion, the code caches deterministic encoder means and uses $z_0=s mu(x)$, with recorded global scale $s=1.160420$. Generated latents are divided by $s$ before decoding. The frozen VAE is not optimized with the denoiser.
+
+Forward noising follows @eq:reparam with $x$ replaced by $z$. The conditional latent objective is Eq. (3) of @rombach2022ldm:
+
+$ L_"LDM"=bb(E)_(x,y,t,epsilon)[norm(epsilon-epsilon_theta(z_t,t,tau_theta(y)))^2]. $ <eq:lldm>
+
+Here $(x,y)$ is a data-label pair, $t$ is uniform, $epsilon$ is independent standard Gaussian noise, and $tau_theta$ encodes the condition. A smaller latent usually reduces denoiser arithmetic, but total cost also includes autoencoder training, encoding, and decoding. Compression and runtime depend on the setting.
+
 #figure(
   image("../figures/fig2_ldm_pipeline.pdf", width: 100%),
-  caption: [The two stages of LDM: perceptual compression into a small latent code, and denoising in the latent space under cross-attention conditioning (Task 5).],
+  caption: [Two-stage pipeline drawn by the authors based on @rombach2022ldm, Figure 3. Training uses encoded data; generation begins from random latent noise and ends with one decoder pass. The diagram shows the KL-regularized variant.],
 ) <fig:ldm-pipeline>
 
-To overcome the severe computational bottlenecks of pixel-space diffusion models, LDM introduces an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling
+For token conditioning, let $F_i=phi_i(z_t) in bb(R)^(N times d_i)$ be flattened U-Net features at layer $i$, with $N=h_i w_i$ spatial positions. The encoder output $U=tau_theta(y) in bb(R)^(M times d_tau)$ contains $M$ tokens. For one attention head of width $d$, the row-oriented projections are
 
-An autoencoder maps an RGB image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$ with its encoder $cal(E)$
+$ Q=F_i W_Q, quad K=U W_K, quad V=U W_V,
+ quad "Attention"(Q,K,V)="softmax"(frac(Q K^T,sqrt(d)))V. $ <eq:crossattn>
 
-$ z = cal(E)(x) $ <eq:vae-enc>
+The learned matrices have shapes $W_Q in bb(R)^(d_i times d)$ and $W_K,W_V in bb(R)^(d_tau times d)$. Thus $Q in bb(R)^(N times d)$, $K,V in bb(R)^(M times d)$, and softmax normalizes each row over the $M$ conditioning tokens. Multi-head attention repeats this operation for separate heads. The original text-conditioned LDM uses a BERT tokenizer and transformer encoder; spatial conditions such as masks or low-resolution images can instead enter through concatenation @rombach2022ldm.
 
-The spatial downsampling factor is $f = H / h = W / w = 2^m$, where $m in bb(N)$ and LDM considers factors $f in \{1, 2, 4, 8, 16, 32\}$; for instance, with $f = 8$, an image of size $256 times 256 times 3$ becomes a latent tensor of size $32 times 32 times 4$, reducing computation while retaining important structural information, and a decoder maps the denoised latent $z_0$ back to image space
-
-$ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $ <eq:vae-dec>
-
-To keep the latent representation useful for reconstruction, the autoencoder can use Kullback–Leibler (KL) regularization toward a standard normal distribution or vector quantization as in the vector-quantized GAN (VQ-GAN), alongside perceptual losses such as the Learned Perceptual Image Patch Similarity (LPIPS) and patch-based adversarial losses
-
-In our implementation we use the KL-regularized variant without perceptual or adversarial terms. The encoder outputs a mean $mu$ and a log-variance $log sigma^2$ for every latent coordinate, the latent is sampled with the reparameterization $z = mu + sigma dot.o epsilon$, $epsilon ~ cal(N)(bold(0), bold(I))$, and the autoencoder is trained with a pixel-wise reconstruction error plus a weighted KL divergence toward $cal(N)(bold(0), bold(I))$
-
-$ L_"VAE" = underbrace(1 / D sum_(i=1)^D (x_i - tilde(x)_i)^2, "reconstruction (MSE)") + beta_"KL" dot underbrace((-1 / (2 D_z)) sum_(j=1)^(D_z) (1 + log sigma_j^2 - mu_j^2 - sigma_j^2), D_"KL" (q(z | x) || cal(N)(bold(0), bold(I)))) $ <eq:lvae>
-
-where $D = H W C$ is the number of image coordinates as in @tab:symbols, $D_z = h w c$ is the number of latent coordinates, and both terms are averaged over coordinates (and over the mini-batch) rather than summed. A small weight $beta_"KL"$ keeps the latent space close to a standard normal, so that it is well scaled for diffusion, without sacrificing reconstruction fidelity
-
-LDM applies the forward and reverse diffusion processes of @eq:forward to @eq:mu_param to latent states $z_t$ rather than full-resolution pixels. Applying @eq:reparam with $x$ replaced by $z$ gives the latent state at any timestep, and during denoising, the U-Net $epsilon_theta (z_t, t, tau_theta (y))$ estimates the noise conditioned on the encoded input $y$, with the model trained using the objective
-
-$ L_"LDM" = bb(E)_(cal(E)(x), y, epsilon, t) [ norm(epsilon - epsilon_theta (z_t, t, tau_theta (y)))^2 ] $ <eq:lldm>
-
-Compressing each spatial dimension by $f$ reduces the number of spatial tokens by $f^2$; at $f = 8$, for instance, a $256 times 256$ image has $65,536$ spatial positions while its $32 times 32$ latent has $1,024$, lowering memory use and computation in the U-Net and its attention layers and allowing faster training and sampling than pixel-space diffusion
-
-For conditional generation, LDM encodes text prompts, layouts, segmentation maps, or other inputs with a domain-specific encoder $tau_theta (y) in bb(R)^(M times d_tau)$, producing $M$ conditioning tokens of dimension $d_tau$; at U-Net layer $i$, the spatial features $phi_i (z_t) in bb(R)^(N times d_epsilon^i)$, where $N = h_i times w_i$, are projected into queries, while the encoded conditioning tokens provide keys and values:
-
-$ Q = W_Q^((i)) dot phi_i (z_t) in bb(R)^(N times d), quad K = W_K^((i)) dot tau_theta (y) in bb(R)^(M times d), quad V = W_V^((i)) dot tau_theta (y) in bb(R)^(M times d) $
-
-Cross-attention is calculated as
-
-$ "Attention"(Q, K, V) = "softmax"((Q K^T) / sqrt(d)) V $ <eq:crossattn>
-
-Here, $W_Q^((i))$, $W_K^((i))$, and $W_V^((i))$ are learned projection matrices and $d$ is the projection dimension; the matrix $Q K^T in bb(R)^(N times M)$ measures the relationship between each spatial location and each conditioning token, allowing the generated content to reflect the input prompt or layout
-
-The two stages of this architecture are summarised in @fig:ldm-pipeline: the first stage compresses the image into a small latent code and rebuilds it from that code alone, whereas the second stage carries out the diffusion process inside that latent code under the guidance of the conditioning signal.
+Our two U-Nets both add the class embedding to the time embedding and apply four-head cross-attention after the first encoder block and at the bottleneck. Each class is represented by only one token ($M=1$). Softmax over one key is always one, so the attention output is a class-dependent value broadcast across positions. This can supply class information, but does not demonstrate the token-selection or spatial alignment possible with a multi-token text encoder.

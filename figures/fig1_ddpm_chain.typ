@@ -9,7 +9,7 @@
 
 #set page(width: 17.2cm, height: auto, margin: 0.35cm)
 #set text(
-  font: ("New Computer Modern", "Linux Libertine", "Times New Roman"),
+  font: "New Computer Modern",
   size: 9pt,
   lang: "en",
 )

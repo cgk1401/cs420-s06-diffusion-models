@@ -1,0 +1,138 @@
+{
+  "description": "Lossless extraction of plotted sample images; labels redrawn separately. No model inference.",
+  "panels": [
+    {
+      "file": "fig_exp_pixel_forward_reverse-00.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 4,
+      "png_sha256": "27578529f2f5636076215e62bc9f8c6209fc0b0763f4c7c6275fef90d382c5b7"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-01.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 5,
+      "png_sha256": "61b3f1b727dc7eedf98cb567d442c451cced96a6bfbe55b2673e829f9d6b4a6d"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-02.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 6,
+      "png_sha256": "334385fe2a2615b71cc1796acf61be56767b84b84590037b9e9a714405404f71"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-03.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 7,
+      "png_sha256": "3188c7d84dc2740be8113fc6ee9e674b7265bcb3ab7702b8166d0e4b660bf867"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-04.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 8,
+      "png_sha256": "8cee9c2d233937eb9a5dbfbfe232acd4811afb3d304c5eb2d0428e06c2a5ab4f"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-05.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 9,
+      "png_sha256": "4005716d9fcb102939accce5472104b293a4af56c2d05c6a41fb96a919c17c4e"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-06.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 10,
+      "png_sha256": "0d864fdbe1d3740d2890e269961d6602e6dfd10fdeddaa51175770766a09ff71"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-07.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 11,
+      "png_sha256": "03fe6c38c894781b5a2f02b2fad2dbcb3cdb2c920065dfad8bc5646e9d3fc485"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-08.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 12,
+      "png_sha256": "bf712a5af9fbc81b95e679f220b76e952aac881e9810e96b28b49675b4225507"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-09.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 13,
+      "png_sha256": "2ba46afaf89726dcf40aab68228942c684db5f694623776b9c5ac1e96d874b39"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-10.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 14,
+      "png_sha256": "d6b4850703c768ca0d9d7912a0c2717f76fd797b3b4cbbde67c9289972dbb8ff"
+    },
+    {
+      "file": "fig_exp_pixel_forward_reverse-11.png",
+      "source_pdf": "figures\\fig_exp_pixel_forward_reverse.pdf",
+      "source_pdf_sha256": "3fcfc39d08d6791d123fc4cd0c0f557211bf8c0e12f54ec2ac299780d8c7a01e",
+      "source_image_xref": 15,
+      "png_sha256": "860c28bac6aa387fed82c45212f059835f6e7f332a1212b28220860d74f97a89"
+    },
+    {
+      "file": "fig_exp_ldm_latent_and_noise-00.png",
+      "source_pdf": "figures\\fig_exp_ldm_latent_and_noise.pdf",
+      "source_pdf_sha256": "24634b6d3d221e4b2323ddd024d96f820fa5c677a9a26c0992757bc9c2d1c1c6",
+      "source_image_xref": 13,
+      "png_sha256": "b22a8bf929ebe4da3cbdacb6a7bcaf5111e6adc6471ce3e550acd8ebf4d3eacc"
+    },
+    {
+      "file": "fig_exp_ldm_latent_and_noise-01.png",
+      "source_pdf": "figures\\fig_exp_ldm_latent_and_noise.pdf",
+      "source_pdf_sha256": "24634b6d3d221e4b2323ddd024d96f820fa5c677a9a26c0992757bc9c2d1c1c6",
+      "source_image_xref": 14,
+      "png_sha256": "e2db5ebcb280451aa7b64260500a5e84e6767f144ccd1fd25c3f52b7a9be4e0c"
+    },
+    {
+      "file": "fig_exp_ldm_latent_and_noise-02.png",
+      "source_pdf": "figures\\fig_exp_ldm_latent_and_noise.pdf",
+      "source_pdf_sha256": "24634b6d3d221e4b2323ddd024d96f820fa5c677a9a26c0992757bc9c2d1c1c6",
+      "source_image_xref": 15,
+      "png_sha256": "42263296b824f6fc1bcf8324e11a9b4c383e5c3b92d858f936e92dc6886f85dc"
+    },
+    {
+      "file": "fig_exp_ldm_cross_attn_conditioning-00.png",
+      "source_pdf": "figures\\fig_exp_ldm_cross_attn_conditioning.pdf",
+      "source_pdf_sha256": "3231d7c016650ed467ee5997661a2e816ea65cdbd03d69805e8ce32b647c88ac",
+      "source_image_xref": 13,
+      "png_sha256": "6b1aef88eb651609d861bdc4ed830614be4d3f3bca441db49967ee1985580e04"
+    },
+    {
+      "file": "fig_exp_ldm_cross_attn_conditioning-01.png",
+      "source_pdf": "figures\\fig_exp_ldm_cross_attn_conditioning.pdf",
+      "source_pdf_sha256": "3231d7c016650ed467ee5997661a2e816ea65cdbd03d69805e8ce32b647c88ac",
+      "source_image_xref": 14,
+      "png_sha256": "9f0323efc441f5bb665aa9c9107a798ddabf951cdc3294f54b23a69b07c7dfed"
+    },
+    {
+      "file": "fig_exp_ldm_cross_attn_conditioning-02.png",
+      "source_pdf": "figures\\fig_exp_ldm_cross_attn_conditioning.pdf",
+      "source_pdf_sha256": "3231d7c016650ed467ee5997661a2e816ea65cdbd03d69805e8ce32b647c88ac",
+      "source_image_xref": 15,
+      "png_sha256": "4db4c22db304b700a9c70a4c5b8a4545691f37d9c9a63cbcc9929a9b9a592242"
+    },
+    {
+      "file": "fig_exp_ldm_cross_attn_conditioning-03.png",
+      "source_pdf": "figures\\fig_exp_ldm_cross_attn_conditioning.pdf",
+      "source_pdf_sha256": "3231d7c016650ed467ee5997661a2e816ea65cdbd03d69805e8ce32b647c88ac",
+      "source_image_xref": 16,
+      "png_sha256": "55f3efbcc15d6f60df3bb850b55451d80cb7c25bffcf5e5e8c156ebec91d9843"
+    }
+  ]
+}

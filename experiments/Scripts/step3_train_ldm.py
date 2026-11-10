@@ -175,7 +175,13 @@ def train_and_evaluate_ldm(
         saved_v = json.loads(vae_stats_path.read_text(encoding="utf-8"))
         latent_std = float(saved_v.get("latent_std", 0.5286))
         latent_scale = float(saved_v.get("latent_scaling_factor", 1.8918))
-        clip_range = 5.867
+        # Reuse the recorded training-run sampler configuration rather than
+        # silently substituting a different clipping range during evaluation.
+        sampler_record_path = config.TABLES_DIR / "ldm_latent_stats.json"
+        if not sampler_record_path.exists():
+            raise ValueError("Evaluation requires ldm_latent_stats.json to restore clip_range")
+        sampler_record = json.loads(sampler_record_path.read_text(encoding="utf-8"))
+        clip_range = float(sampler_record["clip_range"])
         z_all = None
         print(f"[Stage 1: VAE] Loaded cached Latent std = {latent_std:.4f}, scaling factor = {latent_scale:.4f}")
     else:

@@ -190,8 +190,10 @@ def p_sample_loop(
     clip_range: float = 1.0,
 ) -> tuple[torch.Tensor, dict[int, torch.Tensor]]:
     """
-    Full sequential reverse denoising chain from t = T-1 down to t = 0.
-    Cannot skip steps in standard DDPM.
+    Execute T ancestral transitions (schedule index k means mathematical t=k+1).
+    Recording key T-1 denotes the initial x_T before the first transition;
+    every other key k denotes x_k after transition k. Plot labels must respect
+    this convention. Standard ancestral sampling evaluates all schedule steps.
     """
     device = schedule.betas.device
     if seed is not None:
