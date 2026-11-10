@@ -1,4 +1,4 @@
-# Diffusion Models Benchmark: Pixel-Space (DDPM) vs. Latent-Space (LDM)
+\# Diffusion Models Benchmark: Pixel-Space (DDPM) vs. Latent-Space (LDM)
 
 This benchmark provides an empirical, reproducible comparison between **Pixel-Space DDPM** (Ho et al., 2020) and **Latent Diffusion Models - LDM** (Rombach et al., 2022) conducted on the full MNIST dataset ($N = 60,000$, 50 epochs, seed 42) along with cited literature results.
 
