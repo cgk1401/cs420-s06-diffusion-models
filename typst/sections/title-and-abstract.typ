@@ -40,22 +40,7 @@
 
   #v(14pt)
 
-  // Academic Abstract Block
-  #pad(x: 1.0cm)[
-    #align(center)[#text(size: 10.2pt, weight: "bold")[Abstract]]
-    #v(4pt)
-    #set text(size: 9.5pt)
-    #guideline("Abstract | ~150–200 words")[
-      - *Context:* Briefly introduce generative AI in image synthesis and the emergence of diffusion models.
-      - *Core Question & Scope:* State how iưterative Gaussian denoising enables novel image generation in DDPM @ho2020ddpm, and how Latent Diffusion Models (LDM) @rombach2022ldm reduce computational demands.
-      - *Experiments:* Mention the 1D worked numerical example, 5-level forward noising / reverse denoising demonstrations, and pixel-vs.-latent comparison.
-      - *Main Takeaway:* Summarize key findings regarding sampling speed, quality, prompt control, and limitations.
-    ]
-    #v(4pt)
-    #text(size: 9.2pt)[
-      *Index Terms*—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
-    ]
-  ]
+
 
   #v(10pt)
   #line(length: 100%, stroke: 0.5pt + luma(180))
