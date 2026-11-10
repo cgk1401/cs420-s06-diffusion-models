@@ -1,5 +1,7 @@
 #import "../helpers.typ": guideline, fig-placeholder
 
+#set math.equation(numbering: "(1)")
+
 = Method and Worked Example
 
 
