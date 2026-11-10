@@ -2,9 +2,7 @@
 = Background and Paper Review
 == Discriminative vs. Generative Models
 
-Discriminative and generative models have different learning goals. Given an input image $x$ and its label $y$, a discriminative model learns to predict the conditional probability $p(y | x)$ or distinguish between different classes. For example, an image classification model can identify whether an image contains a cat or a dog. However, being able to classify an image does not mean that the model can generate a new image.
-
-In comparison, generative models try to learn how the data itself is distributed, represented by $p(x)$ or the conditional distribution $p(x | y)$. This allows them to generate new samples based on what they have learned from the training data. For instance, an unconditional generative model can create new human face images, while a conditional model can generate images based on a class label or text description. A simple way to understand the difference is that discriminative models answer "Which category does this image belong to?", while generative models answer "What would a new image sampled from the desired distribution look like?"
+Discriminative and generative models differ in their learning objectives. Given an input image $x$ and its label $y$, a discriminative model estimates the conditional distribution $p(y | x)$ and uses it to assign the input to a class, such as distinguishing a cat from a dog. This capability does not imply the ability to synthesize new images. In contrast, a generative model learns the distribution of the data itself—either the unconditional distribution $p(x)$ or a conditional distribution $p(x | y)$—and can therefore draw new samples from the learned distribution. For example, an unconditional generative model can synthesize novel human faces, whereas a conditional model can generate images consistent with a class label or a text description. In essence, discriminative models estimate the probability of a label given an input, while generative models estimate the distribution from which new inputs can be sampled.
 
 == Qualitative Comparison of Generative Models
 
