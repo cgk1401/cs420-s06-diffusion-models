@@ -12,14 +12,14 @@
     ]
   ]
 ]
-#text(weight: "bold")[Forward marginals from the selected test image]
+Forward marginals from the selected test image
 #v(3pt)
 #grid(columns: (1fr,)*6, gutter: 3pt,
   panel(0, [$t=0$]), panel(1, [$t=50$]), panel(2, [$t=200$]),
   panel(3, [$t=400$]), panel(4, [$t=700$]), panel(5, [$t=1000$]),
 )
 #v(7pt)
-#text(weight: "bold")[Independent reverse generation, class $y=3$]
+Independent reverse generation, class $y=3$
 #v(3pt)
 #grid(columns: (1fr,)*6, gutter: 3pt,
   panel(6, [$t=1000$]), panel(7, [$t=699$]), panel(8, [$t=399$]),

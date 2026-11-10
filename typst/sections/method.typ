@@ -88,11 +88,11 @@ The following procedures summarize Algorithms 1-2 of @ho2020ddpm.
 $ x_(t-1)=mu_theta(x_t,t)+sigma_t xi_t,
  quad xi_t ~ cal(N)(bold(0),bold(I)) " for " t>1, quad xi_1=bold(0). $ <eq:sampling>
 
-Each reverse-step noise draw is independent. The implementation first estimates $hat(x)_0=(x_t-sqrt(1-overline(alpha)_t)epsilon_theta)/sqrt(overline(alpha)_t)$, clips it to $[-1,1]$, and uses this estimate in @eq:posterior. At $t=1$ it returns the clean estimate without extra noise. Thus the implemented mean includes clipping, unlike the unclipped algebraic form of @eq:mu_param. Code index $k$ denotes mathematical step $t=k+1$.
+Each reverse-step noise draw is independent. The implementation first estimates $hat(x)_0=(x_t-sqrt(1-overline(alpha)_t)epsilon_theta)/sqrt(overline(alpha)_t)$, clips it to $[-1,1]$, and uses this estimate in @eq:posterior. At $t=1$ it returns the clean estimate without extra noise. Thus the implemented mean includes clipping, unlike the unclipped algebraic form of @eq:mu_param.
 
 == Step-by-Step Worked Numerical Example
 
-We use the first MNIST test image labeled 3 @mnist, with zero-based pixel coordinate $(10,14)$, following the saved output of `step0_worked_example.py`. Its raw intensity is 236. A CPU PyTorch noise draw with seed 42 supplies the selected coordinate $epsilon=-0.714962$. This is one realization, not an expected noise value. The one-dimensional forward step is calculated as follows:
+Worked example: take the first MNIST test image labeled 3 @mnist and its zero-based pixel coordinate $(10,14)$. The raw intensity is 236. For this hand calculation, use the noise draw $epsilon=-0.714962$ (seed 42). This is one realization, not an expected noise value. The one-dimensional forward step is calculated as follows:
 
 1. Normalize: $x_0=236/127.5-1=0.850980$.
 2. Choose $beta_1=0.0001$, so $sqrt(1-beta_1) approx 0.999950$ and $sqrt(beta_1)=0.010000$.

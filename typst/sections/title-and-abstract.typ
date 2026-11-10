@@ -2,10 +2,6 @@
 #block(width: 100%)[
   #set par(first-line-indent: 0pt)
   #align(center)[
-    #text(size: 9pt, weight: "bold", tracking: 0.5pt, fill: luma(90))[
-      CS420: INTRODUCTION TO ARTIFICIAL INTELLIGENCE — SEMINAR RESEARCH REPORT [S06]
-    ]
-    #v(7pt)
     #text(size: 17pt, weight: "bold")[
       Diffusion Models: From Adding Noise to Generating Images
     ]
@@ -47,7 +43,7 @@
     Diffusion models generate images by learning how to remove noise from data. This report studies how this process works and why performing diffusion in a compressed latent space can reduce its computational cost. We review Denoising Diffusion Probabilistic Models (DDPM) and Latent Diffusion Models (LDM), explain their main equations, and provide a step-by-step numerical example. We also examine small class-conditioned implementations on MNIST, using saved experiment records and generated images. In this setting, latent diffusion requires about 14.19 times fewer counted convolution and linear operations per denoising step. However, its recorded sampling time is 1.715 seconds, compared with 1.592 seconds for pixel diffusion, and it requires an additional autoencoder stage. These results illustrate that lower arithmetic cost does not necessarily lead to lower latency at small resolutions. The examples demonstrate basic generation and class conditioning, but do not establish distributional quality or general text-prompt control. We discuss these limits alongside the effects of compression, training data, copyright, and bias.
     #v(4pt)
     #text(size: 9.2pt)[
-      Index Terms—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
+      Keywords: Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
     ]
   ]
 

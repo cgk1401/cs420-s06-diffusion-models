@@ -2,18 +2,18 @@
 == Team Illustrative Experiments
 === Experimental Setup
 
-We analyze saved runs on the 60,000-image MNIST training split @mnist. The run logs record PyTorch 2.11.0, CUDA 13.0, and one NVIDIA RTX PRO 6000 Blackwell Server Edition GPU. Both denoisers use the same compact U-Net design: base width 32, time-embedding dimension 64, two coordinate input channels, and additive class conditioning together with single-token cross-attention. They have different input/output channel counts and parameter totals. Each denoiser was trained for 50 epochs with batch size 64, seed 42, AdamW weight decay $10^(-4)$, and cosine learning-rate decay to $10^(-5)$. Initial learning rates differ: 0.002 for pixel diffusion and 0.0025 for latent diffusion. The VAE was trained for 30 epochs at learning rate 0.003. Appendix A records commands and measurement scope. A fixed seed aids repeatability but does not guarantee identical results across devices or software versions.
+We analyze saved runs on the 60,000-image MNIST training split @mnist. The run logs record PyTorch 2.11.0, CUDA 13.0, and one NVIDIA RTX PRO 6000 Blackwell Server Edition GPU. Both denoisers use the same compact U-Net design: base width 32, time-embedding dimension 64, two coordinate input channels, and additive class conditioning together with single-token cross-attention. They have different input/output channel counts and parameter totals. Each denoiser was trained for 50 epochs with batch size 64, seed 42, AdamW weight decay $10^(-4)$, and cosine learning-rate decay to $10^(-5)$. Initial learning rates differ: 0.002 for pixel diffusion and 0.0025 for latent diffusion. The VAE was trained for 30 epochs at learning rate 0.003. A fixed seed aids repeatability but does not guarantee identical results across devices or software versions.
 
 === Forward Noising and Reverse Generation
 
-The forward demonstration uses five mathematical timesteps: 50, 200, 400, 700, and 1000. A shared noise tensor is used in @eq:reparam, giving valid marginal samples coupled for visualization rather than a sampled Markov trajectory. The signal/noise coefficients are approximately $0.9854/0.1702$ at step 50 and $0.4418/0.8971$ at step 400. At step 1000 the signal coefficient is approximately 0.00635, leaving a small residual signal. For display only, intensities are mapped to $[0,1]$ and clipped; numerical diffusion states are not restricted to that interval.
+The forward demonstration uses five mathematical timesteps: 50, 200, 400, 700, and 1000. A shared noise tensor is used in @eq:reparam, giving valid marginal samples coupled for visualization rather than a sampled Markov trajectory. At step 50, the signal coefficient $sqrt(overline(alpha)_50)$ is approximately $0.9854$, and the noise coefficient $sqrt(1-overline(alpha)_50)$ is approximately $0.1702$. At step 400, these coefficients are approximately $sqrt(overline(alpha)_400)=0.4418$ for signal and $sqrt(1-overline(alpha)_400)=0.8971$ for noise. At step 1000 the signal coefficient is approximately 0.00635, leaving a small residual signal. For display only, intensities are mapped to $[0,1]$ and clipped; numerical diffusion states are not restricted to that interval.
 
 #figure(
   image("../../figures/fig_exp_pixel_forward_reverse.pdf", width: 100%),
-  caption: [Team-generated MNIST demonstration @mnist. Top: clean image and five forward noise levels. Bottom: an independent, class-3 ancestral generation, shown at states $1000,699,399,199,49,0$. Red boxes mark zero-based coordinate $(10,14)$; the rows do not show recovery of the same image. Source: `step2_train_ddpm.py`; snapshot labels corrected from the recorder's post-transition convention.],
+  caption: [Team-generated MNIST demonstration @mnist. Top: clean image and five forward noise levels. Bottom: an independent, class-3 ancestral generation, shown at states $1000,699,399,199,49,0$. Red boxes mark zero-based coordinate $(10,14)$; the rows do not show recovery of the same image.],
 ) <fig:exp-results>
 
-The reverse row in @fig:exp-results starts from independent Gaussian noise and uses 1,000 learned transitions. A recognizable digit emerges as sampling proceeds. The marked coordinate links the location to the worked example, not the identity of an original pixel. Intermediate states are labeled after their recorded transition: code index 699 produces mathematical state 699, whereas index 999 records the initial state before sampling.
+The reverse row in @fig:exp-results starts from independent Gaussian noise and uses 1,000 learned transitions. A recognizable digit emerges as sampling proceeds. The red box marks coordinate $(10,14)$, the same pixel used in the hand-calculated example in Section 3.2. The upper row shows forward noising of the selected test image; the lower row shows a separate class-conditioned sample and does not reconstruct that image.
 
 == Comparison of Pixel-Space and Latent Diffusion
 === Reconstruction and Class Conditioning
@@ -22,12 +22,12 @@ The VAE reduces each image to 196 latent coordinates. On the single selected tes
 
 #figure(
   image("../../figures/fig_exp_ldm_latent_and_noise.pdf", width: 100%),
-  caption: [Team-generated VAE reconstruction example on MNIST @mnist, from `step3_train_ldm.py`. The center panel is the channel mean of a $4 times 7 times 7$ latent, min-max normalized for display. Its $1/16$ area illustrates spatial reduction; scalar storage decreases by $4 times$.],
+  caption: [Team-generated VAE reconstruction example on MNIST @mnist. The center panel is the channel mean of a $4 times 7 times 7$ latent, min-max normalized for display. Its $1/16$ area illustrates spatial reduction; scalar storage decreases by $4 times$.],
 ) <fig:exp-ldm-latent>
 
 #figure(
   image("../../figures/fig_exp_ldm_cross_attn_conditioning.pdf", width: 100%),
-  caption: [Team-generated class-conditioned samples from `step3_train_ldm.py` on MNIST @mnist. Conditions are integer class labels, not free-form text. Initial latent noise is shared, but subsequent reverse-step noise differs across samples. Both additive conditioning and single-token cross-attention are active.],
+  caption: [Team-generated class-conditioned samples on MNIST @mnist. Conditions are integer class labels, not free-form text. Initial latent noise is shared, but subsequent reverse-step noise differs across samples. Both additive conditioning and single-token cross-attention are active.],
 ) <fig:exp-ldm-cond>
 
 @fig:exp-ldm-cond shows outputs for labels 0, 3, and 7. These recognizable examples illustrate class-conditioned generation, but cannot isolate the effect of attention from additive conditioning or subsequent stochastic draws. Because $M=1$, no varying token-selection weights are learned in this demonstration. General text-prompt alignment and causal comparisons between conditioning mechanisms remain outside its scope.
@@ -38,7 +38,7 @@ The VAE reduces each image to 196 latent coordinates. On the single selected tes
 
 #figure(
   kind: table,
-  caption: [Team experiment records: `ddpm_pixel_stats.json`, `ldm_latent_stats.json`, and `vae_stats.json`. Values are single-run observations, not a matched quality or hardware benchmark. Times include only the workloads specified below.],
+  caption: [Team experiment results. Values are single-run observations, not a matched quality or hardware benchmark. Times include only the workloads specified below.],
   {
     set text(size: 9pt)
     set par(justify: false, first-line-indent: 0pt)
