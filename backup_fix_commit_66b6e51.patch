@@ -1,0 +1,149 @@
+﻿diff --git a/typst/references.bib b/typst/references.bib
+index ebb9c3a..1b5425e 100644
+--- a/typst/references.bib
++++ b/typst/references.bib
+@@ -46,3 +46,68 @@
+   publisher = {PMLR},
+   url       = {https://proceedings.mlr.press/v37/sohl-dickstein15.html}
+ }
++
++@inproceedings{song2020ddim,
++  author    = {Song, Jiaming and Meng, Chenlin and Ermon, Stefano},
++  title     = {Denoising Diffusion Implicit Models},
++  booktitle = {International Conference on Learning Representations},
++  year      = {2021},
++  url       = {https://openreview.net/forum?id=St1giarCHLP}
++}
++
++@inproceedings{peebles2023dit,
++  author    = {Peebles, William and Xie, Saining},
++  title     = {Scalable Diffusion Models with Transformers},
++  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision},
++  pages     = {4195--4205},
++  year      = {2023},
++  url       = {https://openaccess.thecvf.com/content/ICCV2023/html/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.html}
++}
++
++@article{lecun1998mnist,
++  author    = {LeCun, Yann and Bottou, L{\'e}on and Bengio, Yoshua and Haffner, Patrick},
++  title     = {Gradient-based learning applied to document recognition},
++  journal   = {Proceedings of the IEEE},
++  volume    = {86},
++  number    = {11},
++  pages     = {2278--2324},
++  year      = {1998},
++  publisher = {IEEE},
++  url       = {https://ieeexplore.ieee.org/document/726791}
++}
++
++@inproceedings{northcutt2021pervasive,
++  author    = {Northcutt, Curtis G. and Athalye, Anish and Mueller, Jonas},
++  title     = {Pervasive Label Errors in Test Sets Destabilize Machine Learning Benchmarks},
++  booktitle = {Advances in Neural Information Processing Systems},
++  volume    = {34},
++  pages     = {1696--1708},
++  year      = {2021},
++  url       = {https://proceedings.neurips.cc/paper/2021/hash/0cd37324c4e2db560a5d482c89f5bc33-Abstract.html}
++}
++
++@inproceedings{carlini2023extracting,
++  author    = {Carlini, Nicholas and Hayes, Jamie and Nasr, Milad and Jagielski, Matthew and Sehwag, Vikas and Tram{\`e}r, Florian and Balle, Borja and Ippolito, Daphne and Wallace, Eric},
++  title     = {Extracting Training Data from Diffusion Models},
++  booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
++  pages     = {5253--5270},
++  year      = {2023},
++  url       = {https://www.usenix.org/conference/usenixsecurity23/presentation/carlini}
++}
++
++@inproceedings{schuhmann2022laion,
++  author    = {Schuhmann, Christoph and Beaumont, Romain and Vencu, Richard and Gordon, Cade W. and Wightman, Ross and Cherti, Mehdi and Coombes, Theo and Katta, Aarush and Mullis, Clayton and Wortsman, Mitchell and Schramowski, Patrick and Kundurthy, Srivatsa and Crowson, Katherine and Schmidt, Ludwig and Kaczmarczyk, Robert and Jitsev, Jenia},
++  title     = {{LAION-5B}: An open large-scale dataset for training next generation image-text models},
++  booktitle = {Advances in Neural Information Processing Systems},
++  volume    = {35},
++  pages     = {25278--25294},
++  year      = {2022},
++  url       = {https://proceedings.neurips.cc/paper_files/paper/2022/hash/a013401569426f42c11438b4c59a5840-Abstract-Datasets_and_Benchmarks.html}
++}
++
++@misc{c2pa2023spec,
++  author    = {{Coalition for Content Provenance and Authenticity}},
++  title     = {{C2PA} Technical Specification, Version 1.3},
++  year      = {2023},
++  url       = {https://c2pa.org}
++}
+diff --git a/typst/sections/conclusion.typ b/typst/sections/conclusion.typ
+index 2374ecb..cbf0932 100644
+--- a/typst/sections/conclusion.typ
++++ b/typst/sections/conclusion.typ
+@@ -1,3 +1,7 @@
+-
+ = Conclusion
+ 
++This report has explored how learning to reverse a gradual noise corruption process enables generative image synthesis, tracing the foundational progression from pixel-space DDPM @ho2020ddpm to high-resolution LDM @rombach2022ldm. In answering the guiding question of this seminar, diffusion models establish that generative synthesis can be framed as a tractable, stable regression task over noise vectors rather than an unstable adversarial minimax optimization or an autoregressive factorization. By training a neural network to predict the injected Gaussian noise across intermediate diffusion timesteps via a simplified mean squared error objective, the model effectively learns to estimate the score function of smoothed data distributions. During ancestral sampling, iteratively subtracting these predicted noise increments along the reverse Markov chain steers pure Gaussian entropy back toward high-density regions of the data distribution, synthesizing sharp and diverse samples.
++
++The transition from DDPM to LDM represents an essential architectural evolution designed to overcome the prohibitive computational burden of diffusing directly across pixel space. By decoupling the generative pipeline into perceptual compression via a spatial autoencoder and semantic generation within the compressed latent space, LDM eliminates high-frequency spatial redundancies while preserving core semantic structures. Our empirical benchmark on $28 times 28$ images demonstrated that compressing images by a factor of sixteen in area yields a $14.19times$ reduction in floating-point operations per step and a $6.13times$ reduction in peak memory, while multi-head cross-attention provides a flexible mechanism to steer an identical latent noise realization toward semantically divergent classes. Crucially, our empirical profiling also highlighted a key practical nuance: latent compression primarily reduces arithmetic demands rather than end-to-end sampling latency at low resolutions, where sequential kernel launch overhead and autoencoder decoding dominate the critical path.
++
++Several promising directions remain open for further exploration. First, inference latency remains the primary obstacle for real-time applications; non-Markovian deterministic samplers such as Denoising Diffusion Implicit Models (DDIM) @song2020ddim, progressive distillation, and flow matching offer compelling solutions to compress the thousand-step sampling trajectory into a handful of function evaluations. Second, generative backbones are increasingly transitioning from convolutional U-Nets to Diffusion Transformers (DiT) @peebles2023dit, which exhibit superior compute scaling behavior, global receptive fields, and parameter efficiency across higher-dimensional latent manifolds. Finally, deploying high-resolution generative models responsibly necessitates continued advancements in dataset curation, bias mitigation, and provenance attribution frameworks to address copyright vulnerabilities and societal asymmetries inherent in web-scale multimodal training.
+diff --git a/typst/sections/method.typ b/typst/sections/method.typ
+index b10ba25..fe55d94 100644
+--- a/typst/sections/method.typ
++++ b/typst/sections/method.typ
+@@ -16,25 +16,31 @@ DDPM define a class of latent variable models inspired by nonequilibrium thermod
+ 
+ #figure(
+   kind: table,
+-  caption: [Symbol definitions, value ranges, and roles in the DDPM framework.],
++  caption: [Symbol definitions, value ranges, and units in the DDPM framework.],
+   {
+-    set text(size: 9.2pt)
++    set text(size: 8.5pt)
+     table(
+-      columns: (0.9fr, 2.2fr, 1.3fr),
+-      align: (left, left, left),
++      columns: (0.85fr, 2.15fr, 1.2fr, 0.95fr),
++      align: (left, left, left, left),
+       stroke: none,
+-      inset: (x: 6pt, y: 5pt),
++      inset: (x: 5pt, y: 4.5pt),
+       table.hline(stroke: 0.9pt),
+-      [Symbol], [Definition and role], [Range / units],
++      [*Symbol*], [*Definition and role*], [*Domain / value range*], [*Unit*],
+       table.hline(stroke: 0.5pt),
+-      [$x_0$], [Clean normalized input data], [$[-1, 1]^D$],
+-      [$x_t, x_(t-1)$], [Noisy latent states at timesteps $t, t-1$], [$bb(R)^D$],
+-      [$t, T$], [Discrete diffusion timestep and total steps], [$t in {1, ..., T}, T = 1000$],
+-      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in [10^(-4), 0.02]$],
+-      [$alpha_t, overline(alpha)_t$], [Signal scaling coefficients ($alpha_t = 1 - beta_t$, $overline(alpha)_t = product_(s=1)^t alpha_s$)], [$(0, 1)$],
+-      [$bold(I)$], [Identity covariance matrix], [$bb(R)^(D times D)$],
+-      [$epsilon$], [Standard isotropic Gaussian noise], [$epsilon ~ cal(N)(bold(0), bold(I))$],
+-      [$epsilon_theta (x_t, t)$], [Parameterized neural noise predictor (U-Net)], [$bb(R)^D$],
++      [$D$], [Flattened data dimensionality ($H times W times C$)], [$bb(N)^+$ ($784$ for MNIST)], [Pixels / scalars],
++      [$x_0$], [Clean normalized input data], [$[-1, 1]^D$], [Dimensionless],
++      [$x_t, x_(t-1)$], [Noisy states at timesteps $t, t-1$], [$bb(R)^D$], [Dimensionless],
++      [$t, T$], [Discrete diffusion timestep and total steps], [$t in {1, ..., T}, T = 1000$], [Timesteps],
++      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in [10^(-4), 0.02]$], [Dimensionless],
++      [$alpha_t, overline(alpha)_t$], [Signal scaling coefficients ($alpha_t = 1 - beta_t$, $overline(alpha)_t = product_(s=1)^t alpha_s$)], [$(0, 1)$], [Dimensionless],
++      [$bold(I)$], [Identity covariance matrix], [$bb(R)^(D times D)$], [Dimensionless],
++      [$epsilon$], [Standard isotropic Gaussian noise vector], [$epsilon ~ cal(N)(bold(0), bold(I))$], [Dimensionless],
++      [$epsilon_theta (x_t, t)$], [Parameterized neural noise predictor (U-Net)], [$bb(R)^D$], [Dimensionless],
++      [$mu_theta (x_t, t)$], [Parameterized mean of reverse transition $p_theta (x_(t-1) | x_t)$], [$bb(R)^D$], [Dimensionless],
++      [$Sigma_theta (x_t, t)$], [Covariance matrix of reverse transition ($= sigma_t^2 bold(I)$)], [$bb(R)^(D times D)$], [Dimensionless],
++      [$sigma_t^2$], [Untrained reverse step variance scalar ($beta_t$ or $tilde(beta)_t$)], [$(0, 1)$], [Dimensionless],
++      [$tilde(beta)_t$], [Posterior variance of forward process given $x_0$], [$(0, 1)$], [Dimensionless],
++      [$tilde(mu)_t (x_t, x_0)$], [Tractable posterior mean of forward step given $x_0$], [$bb(R)^D$], [Dimensionless],
+       table.hline(stroke: 0.9pt),
+     )
+   },
+diff --git a/typst/sections/results.typ b/typst/sections/results.typ
+index 7e7fad6..23e6821 100644
+--- a/typst/sections/results.typ
++++ b/typst/sections/results.typ
+@@ -154,6 +154,6 @@ These limitations bound the conclusions. Our experiments use 28$times$28 images
+ 
+ === Data, Copyright, and Bias
+ 
+-Our experiments are trained exclusively on MNIST, released under a Creative Commons Attribution-ShareAlike licence; no web-scraped corpus, photograph or third-party artwork enters the pipeline, so the copyright exposure of the present study is minimal. Its limitations are nonetheless real: the corpus is demographically narrow, produced by a predominantly adult American population whose handwriting conventions differ markedly from other cultures, and audits report a small fraction of incorrect labels. A model trained on it inherits a narrow prior over stroke shape and orientation, visible in our samples as clean but stylistically uniform digits, so any claim of generalisable generation quality must be restricted to the MNIST domain.
++Our experiments are trained exclusively on the MNIST benchmark dataset @lecun1998mnist, released under a Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0) licence; no web-scraped corpus, photograph, or third-party artwork enters the pipeline, so the copyright exposure of the present study is minimal. Its limitations are nonetheless real: the corpus is demographically narrow, originating from NIST Special Database 3 and 1 collected from US Census Bureau employees and high school students @lecun1998mnist, whose handwriting conventions differ markedly from other cultures. Furthermore, systematic benchmark audits report a small fraction of label errors (approximately 0.15% in test sets) due to ambiguous or incorrect manual annotations @northcutt2021pervasive. A model trained on it inherits a narrow prior over stroke shape and orientation, visible in our samples as clean but stylistically uniform digits, so any claim of generalisable generation quality must be restricted to the MNIST domain.
+ 
+-The literature motivating this report is exposed to risks our setting avoids. The high-resolution latent diffusion models of @rombach2022ldm and their successors are trained on web-scraped image-text collections of billions of pairs in which copyrighted artworks and identifiable persons appear unfiltered, which raises a copyright problem, since near-verbatim training images can be extracted from a trained generator; a style problem, since the manner of an identifiable artist can be reproduced without copying any image exactly, leaving attribution and consent unresolved; and a bias problem, since these corpora over-represent the English-speaking and affluent parts of the internet, an asymmetry that cross-attention can even steer deliberately. Countermeasures include deduplication and opt-out lists, provenance metadata such as the Coalition for Content Provenance and Authenticity (C2PA) standard, and auditing outputs for memorised content.
++The literature motivating this report is exposed to risks our setting avoids. The high-resolution latent diffusion models of @rombach2022ldm and their successors are trained on web-scraped image-text collections of billions of pairs, such as LAION-5B @schuhmann2022laion, in which copyrighted artworks and identifiable persons appear unfiltered. This raises a copyright problem, since near-verbatim training images can be extracted from a trained generator @carlini2023extracting; a style problem, since the manner of an identifiable artist can be reproduced without copying any image exactly, leaving attribution and consent unresolved; and a bias problem, since these corpora over-represent the English-speaking and affluent parts of the internet, an asymmetry that cross-attention can even steer deliberately. Countermeasures include deduplication and opt-out lists, provenance metadata such as the Coalition for Content Provenance and Authenticity (C2PA) standard @c2pa2023spec, and auditing outputs for memorised content.

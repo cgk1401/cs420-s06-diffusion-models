@@ -1,0 +1,377 @@
+﻿diff --git a/typst/main.typ b/typst/main.typ
+index 47e79a2..86494ed 100644
+--- a/typst/main.typ
++++ b/typst/main.typ
+@@ -13,7 +13,7 @@
+       #set text(size: 8.5pt, fill: luma(110))
+       CS420 Seminar Research Report — Topic [S06]: Diffusion Models
+       #h(1fr)
+-      _From Adding Noise to Generating Images_
++      From Adding Noise to Generating Images
+       #v(-5pt)
+       #line(length: 100%, stroke: 0.4pt + luma(190))
+     ]
+diff --git a/typst/sections/background.typ b/typst/sections/background.typ
+index 2a20306..4f3b5e5 100644
+--- a/typst/sections/background.typ
++++ b/typst/sections/background.typ
+@@ -1,12 +1,12 @@
+ 
+ = Background and Paper Review
+-== Discriminative vs. Generative Models
++== Discriminative and Generative Models
+ 
+ Discriminative and generative models differ in their learning objectives. Given an input image $x$ and its label $y$, a discriminative model estimates the conditional distribution $p(y | x)$ and uses it to assign the input to a class, such as distinguishing a cat from a dog. This capability does not imply the ability to synthesize new images. In contrast, a generative model learns the distribution of the data itself - either the unconditional distribution $p(x)$ or a conditional distribution $p(x | y)$ - and can therefore draw new samples from the learned distribution. For example, an unconditional generative model can synthesize novel human faces, whereas a conditional model can generate images consistent with a class label or a text description. In essence, discriminative models estimate the probability of a label given an input, while generative models estimate the distribution from which new inputs can be sampled.
+ 
+ == Qualitative Comparison of Generative Models
+ 
+-There are several types of generative models, and each uses a different approach to learn and generate data. Generative Adversarial Networks (GANs) consist of two networks: a generator and a discriminator. The generator tries to create realistic images, while the discriminator attempts to distinguish generated images from real ones. This process can produce high-quality images relatively quickly. However, GAN training can be unstable, and the model may experience mode collapse, where it generates only a limited variety of images @goodfellow2014gan.
++There are several types of generative models, and each uses a different approach to learn and generate data. GANs consist of two networks: a generator and a discriminator. The generator tries to create realistic images, while the discriminator attempts to distinguish generated images from real ones. This process can produce high-quality images relatively quickly. However, GAN training can be unstable, and the model may experience mode collapse, where it generates only a limited variety of images @goodfellow2014gan.
+ 
+ Autoregressive models generate data one component at a time by using conditional probabilities. Each new component depends on the components generated before it. This provides a clear probabilistic way to model data, but it also means that generation must happen sequentially. As a result, generating high-dimensional data can take considerable time.
+ 
+@@ -28,13 +28,13 @@ Table @tab:gen-comparison summarizes the main differences between these generati
+       inset: (x: 5pt, y: 5.5pt),
+ 
+       table.hline(stroke: 0.9pt),
+-      [*Criterion*], [*GANs*], [*Autoregressive*], [*VAEs*], [*Diffusion Models*],
++      [Criterion], [GANs], [Autoregressive], [VAEs], [Diffusion Models],
+       table.hline(stroke: 0.5pt),
+ 
+       [Core Principle],
+-      [Adversarial \ #text(size: 7.3pt, fill: luma(90))[Generator vs. discriminator]],
++      [Adversarial \ #text(size: 7.3pt, fill: luma(90))[Generator against discriminator]],
+       [Sequential \ #text(size: 7.3pt, fill: luma(90))[Conditional step-by-step]],
+-      [Autoencoding \ #text(size: 7.3pt, fill: luma(90))[Latent compress & decode]],
++      [Autoencoding \ #text(size: 7.3pt, fill: luma(90))[Latent compression and decoding]],
+       [Iterative Denoising \ #text(size: 7.3pt, fill: luma(90))[Multi-step noise removal]],
+ 
+       [Sample Quality],
+@@ -66,7 +66,7 @@ Table @tab:gen-comparison summarizes the main differences between these generati
+   },
+ ) <tab:gen-comparison>
+ 
+-From this comparison, it can be seen that each generative approach has its own advantages and limitations. GANs and VAEs are generally faster when generating samples, while Diffusion Models often produce high-quality and diverse images but require more computation. This difference becomes especially important when working with high-resolution images. It is also one of the main reasons why Latent Diffusion Models were developed, as they aim to reduce the computational cost of diffusion-based image generation.
++From this comparison, it can be seen that each generative approach has its own advantages and limitations. GANs and VAEs are generally faster when generating samples, while Diffusion Models often produce high-quality and diverse images but require more computation. This difference becomes especially important when working with high-resolution images. It is also one of the main reasons why LDM was developed, as it aims to reduce the computational cost of diffusion-based image generation.
+ 
+ == Review of Core Papers: From DDPM to LDM
+ 
+@@ -80,7 +80,7 @@ Despite these results, DDPM still has an important limitation. The model perform
+ 
+ === LDM -- High-Resolution Image Synthesis with Latent Diffusion Models.
+ 
+-To address the computational cost of pixel-space diffusion, Rombach et al. @rombach2022ldm introduce Latent Diffusion Models (LDMs). The main idea is to perform diffusion in a compressed latent space rather than directly on the original image. The authors divide the approach into two main parts: perceptual compression and semantic generation.
++To address the computational cost of pixel-space diffusion, Rombach et al. @rombach2022ldm introduce LDM. The main idea is to perform diffusion in a compressed latent space rather than directly on the original image. The authors divide the approach into two main parts: perceptual compression and semantic generation.
+ 
+ First, an autoencoder compresses the input image into a lower-dimensional latent representation. This representation is designed to preserve important visual information while reducing the amount of data that needs to be processed. The diffusion model then learns to add and remove noise in this latent space. After the denoising process is finished, a decoder converts the generated latent representation back into an image.
+ 
+diff --git a/typst/sections/introduction.typ b/typst/sections/introduction.typ
+index 167ba59..2666e05 100644
+--- a/typst/sections/introduction.typ
++++ b/typst/sections/introduction.typ
+@@ -20,7 +20,7 @@
+ // đã sửa
+ 
+ Artificial intelligence (AI) image synthesis is the process of generating new images by learning patterns from existing data. It is widely used in areas such as digital content creation, image editing, and visual design.
+-However, generating realistic, diverse, and high-resolution images is still a challenging problem. Several generative approaches have been developed to address this task. For example, Generative Adversarial Networks (GANs) can generate images quickly, but their training process can be unstable and may suffer from _mode collapse_. Autoregressive models generate images by modeling conditional probabilities, although their sequential generation process can be slow when dealing with high-dimensional data @goodfellow2014gan @rombach2022ldm.
++However, generating realistic, diverse, and high-resolution images is still a challenging problem. Several generative approaches have been developed to address this task. For example, Generative Adversarial Networks (GANs) can generate images quickly, but their training process can be unstable and may suffer from mode collapse. Autoregressive models generate images by modeling conditional probabilities, although their sequential generation process can be slow when dealing with high-dimensional data @goodfellow2014gan @rombach2022ldm.
+ 
+ Diffusion Models use a different method to generate images. Instead of creating an image directly, they gradually add noise to training images and then learn how to remove that noise. Once the model has learned this process, it can generate new images starting from random noise. In Denoising Diffusion Probabilistic Models (DDPM), Ho et al. @ho2020ddpm show that a neural network can learn to predict the noise added to an image using a simplified training objective. Although DDPM can produce high-quality images, it requires many denoising steps, which makes image generation computationally expensive. This problem becomes more noticeable when generating high-resolution images. To reduce this cost, Rombach et al. @rombach2022ldm propose Latent Diffusion Models (LDM), which perform the diffusion process in a compressed latent space instead of directly on image pixels.
+ 
+diff --git a/typst/sections/method.typ b/typst/sections/method.typ
+index 2819f7a..b10ba25 100644
+--- a/typst/sections/method.typ
++++ b/typst/sections/method.typ
+@@ -10,7 +10,7 @@
+   caption: [Conceptual overview of the two opposing Markov chains of DDPM: the forward process that corrupts data with noise and the learned reverse process that removes it (Task 2).],
+ ) <fig:ddpm-chain>
+ 
+-=== Theoretical Framework & Modeling Assumptions
++=== Theoretical Framework and Modeling Assumptions
+ 
+ DDPM define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free forward diffusion process that systematically degrades data into isotropic Gaussian noise, and a parameterized reverse process that learns to invert this degradation to synthesize novel samples. The principal mathematical notations, parameter definitions, and variable ranges used throughout this framework are summarized in @tab:symbols.
+ 
+@@ -25,12 +25,12 @@ DDPM define a class of latent variable models inspired by nonequilibrium thermod
+       stroke: none,
+       inset: (x: 6pt, y: 5pt),
+       table.hline(stroke: 0.9pt),
+-      [*Symbol*], [*Definition & Role*], [*Range / Units*],
++      [Symbol], [Definition and role], [Range / units],
+       table.hline(stroke: 0.5pt),
+       [$x_0$], [Clean normalized input data], [$[-1, 1]^D$],
+       [$x_t, x_(t-1)$], [Noisy latent states at timesteps $t, t-1$], [$bb(R)^D$],
+       [$t, T$], [Discrete diffusion timestep and total steps], [$t in {1, ..., T}, T = 1000$],
+-      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in (10^(-4), 0.02)$],
++      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in [10^(-4), 0.02]$],
+       [$alpha_t, overline(alpha)_t$], [Signal scaling coefficients ($alpha_t = 1 - beta_t$, $overline(alpha)_t = product_(s=1)^t alpha_s$)], [$(0, 1)$],
+       [$bold(I)$], [Identity covariance matrix], [$bb(R)^(D times D)$],
+       [$epsilon$], [Standard isotropic Gaussian noise], [$epsilon ~ cal(N)(bold(0), bold(I))$],
+@@ -40,7 +40,7 @@ DDPM define a class of latent variable models inspired by nonequilibrium thermod
+   },
+ ) <tab:symbols>
+ 
+-=== Data Scaling & Preprocessing Assumptions
++=== Data Scaling and Preprocessing Assumptions
+ 
+ Image data consisting of discrete pixel intensities $x_"raw" in {0, 1, ..., 255}^D$ (where $D = H times W times C$) is scaled linearly to the continuous interval $[-1, 1]^D$:
+ 
+@@ -48,7 +48,7 @@ $ x_0 = (x_"raw") / 127.5 - 1 $
+ 
+ This normalization ensures that the input signal $x_0$ is centered at zero with coordinate-wise variance consistent with the standard Gaussian prior $p(x_T) = cal(N)(bold(0), bold(I))$, preventing numerical instabilities during neural network processing.
+ 
+-=== Forward Process & $beta$ Schedule
++=== Forward Process and $beta$ Schedule
+ 
+ The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to the variance schedule $beta_1, ..., beta_T$ (summarized in @tab:symbols):
+ 
+@@ -66,7 +66,7 @@ $ x_t (x_0, epsilon) = sqrt(overline(alpha)_t) x_0 + sqrt(1 - overline(alpha)_t)
+ 
+ As $t -> T$, $overline(alpha)_T -> 0$, causing the signal $x_0$ to vanish completely so that $x_T approx cal(N)(bold(0), bold(I))$.
+ 
+-=== Reverse Process, Noise Predictor & Sampling
++=== Reverse Process, Noise Predictor, and Sampling
+ 
+ The reverse process $p_theta (x_(0:T))$ is a learned Markov chain starting from a standard Gaussian prior $p(x_T) = cal(N)(x_T; bold(0), bold(I))$. It is parameterized by a U-Net neural network with parameters $theta$:
+ 
+@@ -82,7 +82,7 @@ Substituting $x_0 = (x_t - sqrt(1 - overline(alpha)_t) epsilon) / (sqrt(overline
+ 
+ $ mu_theta (x_t, t) = 1 / (sqrt(alpha_t)) (x_t - (beta_t) / (sqrt(1 - overline(alpha)_t)) epsilon_theta (x_t, t)) $ <eq:mu_param>
+ 
+-This reparameterization simplifies the variational lower bound (ELBO) into an unweighted mean squared error objective over noise vectors, termed $L_"simple"$:
++This reparameterization simplifies the variational lower bound (ELBO) into an unweighted mean squared error (MSE) objective over noise vectors, termed $L_"simple"$:
+ 
+ $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^2 ] $ <eq:lsimple>
+ 
+@@ -90,7 +90,7 @@ The overall transitions of the forward noising and reverse denoising Markov chai
+ 
+ == Step-by-Step Worked Numerical Example
+ 
+-The numerical example uses the MNIST test set and selects the first image labeled as the digit `3`, whose raw pixel intensities $I_0 in [0, 255]$ are normalized to $x_0 in [-1, 1]$ using $x_0 = I_0 / 127.5 - 1$; the variance schedule follows the method of Ho and colleagues (2020) with $T = 1000$, $beta_1 = 0.0001$, and $beta_T = 0.02$, and a fixed random seed of `42` is used for both NumPy and PyTorch, while the calculation uses the pixel at row $10$ and column $14$ from the central foreground region; its raw intensity is $236$ and its normalized value is:
++The numerical example uses the MNIST test set and selects the first image labeled as the digit 3, whose raw pixel intensities $I_0 in [0, 255]$ are normalized to $x_0 in [-1, 1]$ using $x_0 = I_0 / 127.5 - 1$; the variance schedule follows the method of Ho and colleagues (2020) with $T = 1000$, $beta_1 = 0.0001$, and $beta_T = 0.02$, and a fixed random seed of 42 is used for both NumPy and PyTorch, while the calculation uses the pixel at row $10$ and column $14$ from the central foreground region; its raw intensity is $236$ and its normalized value is:
+ 
+ $ x_0 = frac(236, 127.5) - 1 = 0.850980 $ <eq-x0>
+ 
+@@ -102,11 +102,7 @@ This result is one realization from $q(x_1 | x_0) = cal(N)(sqrt(1 - beta_1) x_0,
+ 
+ $ x_(50) = 0.985401 times 0.850980 + 0.170248 times (-0.714962) = 0.716836 $
+ 
+-Using the same example, the simplified noise-prediction objective at timestep $t = 1$ is:
+-
+-$ L_"simple" = EE_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta(x_t, t))^2 ] $ <eq-lsimple>
+-
+-Passing $x_1$ through the initial, untrained `ConditionalUNet` with time and class conditioning gives predicted noise $epsilon_theta(x_1, 1) = 0.421943$, so the difference between the injected noise and the prediction is:
++Using the same example, we evaluate the simplified objective $L_"simple"$ of @eq:lsimple at timestep $t = 1$. Passing $x_1$ through the initial, untrained conditional U-Net with time and class conditioning gives predicted noise $epsilon_theta(x_1, 1) = 0.421943$, so the difference between the injected noise and the prediction is:
+ 
+ $ e_1 = epsilon - epsilon_theta(x_1, 1) = -0.714962 - 0.421943 = -1.136905 $
+ 
+@@ -120,14 +116,14 @@ $ L_"simple"^(t=1) = frac(1, 784) sum_(r=1)^(28) sum_(c=1)^(28) (epsilon_(r, c)
+ 
+ The single-pixel error is one contribution to this image-level mean, while training minimizes the corresponding noise-prediction error over sampled images, timesteps, and noise vectors
+ 
+-== Latent Diffusion Models (LDM) <sec:ldm>
++== LDM: Two-Stage Latent Diffusion <sec:ldm>
+ 
+ #figure(
+   image("../figures/fig2_ldm_pipeline.pdf", width: 100%),
+-  caption: [The two stages of Latent Diffusion Models: perceptual compression into a small latent code, and denoising in the latent space under cross-attention conditioning (Task 5).],
++  caption: [The two stages of LDM: perceptual compression into a small latent code, and denoising in the latent space under cross-attention conditioning (Task 5).],
+ ) <fig:ldm-pipeline>
+ 
+-To overcome the severe computational bottlenecks of pixel-space diffusion models, Latent Diffusion Models (LDM) introduce an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling
++To overcome the severe computational bottlenecks of pixel-space diffusion models, LDM introduces an explicit two-stage architecture that decouples perceptual compression from generative semantic modeling
+ 
+ An autoencoder maps an RGB image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$ with its encoder $cal(E)$
+ 
+@@ -137,13 +133,15 @@ The spatial downsampling factor is $f = H / h = W / w = 2^m$, where $m in bb(N)$
+ 
+ $ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $ <eq:vae-dec>
+ 
+-To keep the latent representation useful for reconstruction, the autoencoder can use KL regularization toward a standard normal distribution or vector quantization as in VQ-GAN, alongside perceptual losses such as LPIPS and patch-based adversarial losses
++To keep the latent representation useful for reconstruction, the autoencoder can use Kullback–Leibler (KL) regularization toward a standard normal distribution or vector quantization as in the vector-quantized GAN (VQ-GAN), alongside perceptual losses such as the Learned Perceptual Image Patch Similarity (LPIPS) and patch-based adversarial losses
++
++In our implementation we use the KL-regularized variant without perceptual or adversarial terms. The encoder outputs a mean $mu$ and a log-variance $log sigma^2$ for every latent coordinate, the latent is sampled with the reparameterization $z = mu + sigma dot.o epsilon$, $epsilon ~ cal(N)(bold(0), bold(I))$, and the autoencoder is trained with a pixel-wise reconstruction error plus a weighted KL divergence toward $cal(N)(bold(0), bold(I))$
+ 
+-LDM applies the forward and reverse diffusion processes to latent states $z_t$ rather than full-resolution pixels, with the forward process defined as
++$ L_"VAE" = underbrace(1 / D sum_(i=1)^D (x_i - tilde(x)_i)^2, "reconstruction (MSE)") + beta_"KL" dot underbrace((-1 / (2 D_z)) sum_(j=1)^(D_z) (1 + log sigma_j^2 - mu_j^2 - sigma_j^2), D_"KL" (q(z | x) || cal(N)(bold(0), bold(I)))) $ <eq:lvae>
+ 
+-$ q(z_(1:T) | z_0) = product_(t=1)^T q(z_t | z_(t-1)), quad q(z_t | z_0) = cal(N)(z_t; sqrt(overline(alpha)_t) z_0, (1 - overline(alpha)_t) bold(I)) $
++where $D = H W C$ is the number of image coordinates as in @tab:symbols, $D_z = h w c$ is the number of latent coordinates, and both terms are averaged over coordinates (and over the mini-batch) rather than summed. A small weight $beta_"KL"$ keeps the latent space close to a standard normal, so that it is well scaled for diffusion, without sacrificing reconstruction fidelity
+ 
+-The closed-form expression $z_t (z_0, epsilon) = sqrt(overline(alpha)_t) z_0 + sqrt(1 - overline(alpha)_t) epsilon$, where $epsilon ~ cal(N)(bold(0), bold(I))$, gives the latent state at any timestep, and during denoising, the U-Net $epsilon_theta (z_t, t, tau_theta (y))$ estimates the noise conditioned on the encoded input $y$, with the model trained using the objective
++LDM applies the forward and reverse diffusion processes of @eq:forward to @eq:mu_param to latent states $z_t$ rather than full-resolution pixels. Applying @eq:reparam with $x$ replaced by $z$ gives the latent state at any timestep, and during denoising, the U-Net $epsilon_theta (z_t, t, tau_theta (y))$ estimates the noise conditioned on the encoded input $y$, with the model trained using the objective
+ 
+ $ L_"LDM" = bb(E)_(cal(E)(x), y, epsilon, t) [ norm(epsilon - epsilon_theta (z_t, t, tau_theta (y)))^2 ] $ <eq:lldm>
+ 
+diff --git a/typst/sections/results.typ b/typst/sections/results.typ
+index cd337f9..7e7fad6 100644
+--- a/typst/sections/results.typ
++++ b/typst/sections/results.typ
+@@ -5,11 +5,11 @@
+ 
+ === Experimental Setup and Implementation Details
+ 
+-All empirical evaluations are conducted on the full MNIST training set ($60,000$ samples) using PyTorch with CUDA GPU acceleration, fixing the global random seed to 42 for exact numerical reproducibility with Section 3.2. We train a conditional U-Net containing $179,809$ trainable parameters, equipped with 64-dimensional sinusoidal time embeddings, class embeddings for digits 0–9, and a cross-attention bottleneck. Optimization is performed using AdamW (initial learning rate $2 times 10^(-3)$, weight decay $10^(-4)$) coupled with a Cosine Annealing learning rate schedule decaying to $10^(-5)$ over 50 epochs with a batch size of 64. On a single GPU workstation, training completes in $471.2$ seconds (averaging $9.42$ seconds per epoch), with the simplified objective $L_"simple"$ decreasing steadily from $0.0493$ to $0.0210$, and the final-epoch model used for all reported sampling results.
++All empirical evaluations are conducted on the full MNIST training set ($60,000$ samples) using PyTorch 2.11.0 with CUDA 13.0 on a single NVIDIA RTX PRO 6000 Blackwell Server Edition GPU, fixing the global random seed to 42 for exact numerical reproducibility with Section 3.2. We train a conditional U-Net containing $179,809$ trainable parameters, equipped with 64-dimensional sinusoidal time embeddings, class embeddings for digits 0–9, and a cross-attention bottleneck. Optimization is performed using AdamW, the Adam optimizer with decoupled weight decay (initial learning rate $2 times 10^(-3)$, weight decay $10^(-4)$) coupled with a Cosine Annealing learning rate schedule decaying to $10^(-5)$ over 50 epochs with a batch size of 64. On this GPU, training completes in $471.2$ seconds (averaging $9.42$ seconds per epoch), with the simplified objective $L_"simple"$ decreasing steadily from $0.0493$ to $0.0210$, and the final-epoch model used for all reported sampling results.
+ 
+-=== Forward Noising and Reverse Denoising (Tasks 4a & 4b)
++=== Forward Noising and Reverse Denoising (Tasks 4a and 4b)
+ 
+-Following the closed-form forward formulation in @eq:reparam, noisy states $x_t$ are sampled directly at $t in {50, 200, 400, 700, 1000}$ (schedule indices $49, 199, 399, 699, 999$) and shown in Row 1 of @fig:exp-results. As $t$ increases, the signal scale $sqrt(overline(alpha)_t)$ decays while the noise scale $sqrt(1 - overline(alpha)_t)$ grows: at $t = 50$ the signal still dominates ($0.9854$ vs. $0.1702$), by $t = 400$ noise overtakes it ($0.8971 > 0.4418$), and at $t = 1000$ the state is essentially isotropic Gaussian noise ($sqrt(overline(alpha)_(1000)) approx 0.00635$), confirming complete information erasure.
++Following the closed-form forward formulation in @eq:reparam, noisy states $x_t$ are sampled directly at $t in {50, 200, 400, 700, 1000}$ (schedule indices $49, 199, 399, 699, 999$) and shown in Row 1 of @fig:exp-results. As $t$ increases, the signal scale $sqrt(overline(alpha)_t)$ decays while the noise scale $sqrt(1 - overline(alpha)_t)$ grows: at $t = 50$ the signal still dominates ($0.9854 > 0.1702$), by $t = 400$ noise overtakes it ($0.8971 > 0.4418$), and at $t = 1000$ the state is essentially isotropic Gaussian noise ($sqrt(overline(alpha)_(1000)) approx 0.00635$), confirming complete information erasure.
+ 
+ #figure(
+   image("../../figures/fig_exp_pixel_forward_reverse.pdf", width: 100%),
+@@ -18,13 +18,13 @@ Following the closed-form forward formulation in @eq:reparam, noisy states $x_t$
+ 
+ Generation inverts this process by sequentially evaluating the learned transitions parameterized by @eq:reverse and @eq:mu_param. Starting from $x_(1000) ~ cal(N)(bold(0), bold(I))$ conditioned on $y = 3$, ancestral sampling over all $T = 1000$ steps produces the trajectory in Row 2 of @fig:exp-results. The reverse chain follows a coarse-to-fine progression: low-frequency priors emerge by $t = 700$, the dual-loop structure of digit 3 appears by $t = 400$, stroke geometry consolidates at $t = 200$, and high-frequency details sharpen by $t = 50$ until a clean digit is obtained at $t = 0$. The tracked coordinate $(10, 14)$ remains consistent across both rows, linking the numerical example in Section 3.2 to the observed pixel evolution.
+ 
+-== Comparison: Pixel-Space vs. Latent Diffusion
++== Comparison of Pixel-Space and Latent Diffusion
+ 
+ === Two-Stage Latent Diffusion Architecture
+ 
+-To overcome the prohibitive computational burden of diffusing directly in high-dimensional pixel space, Latent Diffusion Models (LDM) @rombach2022ldm decouple the generative process into two dedicated functional stages. The first stage performs perceptual compression with the Spatial Variational Autoencoder introduced in @sec:ldm: each $1 times 28 times 28$ input is mapped to a $4 times 7 times 7$ latent by the encoder of @eq:vae-enc and reconstructed by the decoder of @eq:vae-dec, yielding the $f = 4$ downsampling ($16 times$ area reduction) discussed there. The autoencoder is trained for 30 epochs with the reconstruction and KL objective described in that section, using $beta_"KL" = 5 times 10^(-4)$. On canonical validation samples, this stage attains a reconstruction Mean Squared Error of $0.0010$ and a Peak Signal-to-Noise Ratio (PSNR) of $30.10$ dB, indicating that the compressed representation preserves the perceptually relevant structure of the digit.
++To overcome the prohibitive computational burden of diffusing directly in high-dimensional pixel space, LDM @rombach2022ldm decouples the generative process into two dedicated functional stages. The first stage performs perceptual compression with the spatial VAE introduced in @sec:ldm: each $1 times 28 times 28$ input is mapped to a $4 times 7 times 7$ latent by the encoder of @eq:vae-enc and reconstructed by the decoder of @eq:vae-dec, yielding the $f = 4$ downsampling ($16 times$ area reduction) discussed there. The autoencoder is trained for 30 epochs with the reconstruction and KL objective of @eq:lvae, using $beta_"KL" = 5 times 10^(-4)$. On canonical validation samples, this stage attains a reconstruction MSE of $9.78 times 10^(-4)$ and a Peak Signal-to-Noise Ratio (PSNR) of $30.10$ dB, indicating that the compressed representation preserves the perceptually relevant structure of the digit.
+ 
+-The second stage runs diffusion entirely within the $4 times 7 times 7$ latent manifold using the conditional U-Net objective defined in @eq:lldm. Instead of injecting the class label through element-wise addition, the latent U-Net integrates the multi-head Cross-Attention mechanism of @eq:crossattn, in which queries are projected from intermediate U-Net feature maps while keys and values are projected from the conditioning token embedding $tau_theta(y)$. This design allows the same backbone to route class information directly into the spatial feature hierarchy without altering the latent diffusion objective.
++The second stage runs diffusion entirely within the $4 times 7 times 7$ latent manifold using the conditional U-Net objective defined in @eq:lldm. The latent denoiser is the same conditional U-Net used for the pixel-space model in the previous subsection, with the same conditioning mechanism: the class embedding $tau_theta(y)$ is added to the time embedding that modulates every residual block, and the same embedding is also injected through the Cross-Attention mechanism of @eq:crossattn at two locations (after the first encoder block and at the bottleneck), in which queries are projected from intermediate U-Net feature maps while keys and values are projected from $tau_theta(y)$. The only differences from the pixel model are the operating space and the number of input channels (four latent channels instead of one image channel).
+ 
+ The compression and reconstruction flow of the first stage is visualized in @fig:exp-ldm-latent.
+ 
+@@ -44,13 +44,15 @@ A foundational capability of LDM is steering an identical stochastic initial sta
+ 
+ As demonstrated in @fig:exp-ldm-cond, the shared initial noise cloud provides the spatial entropy base, while the Cross-Attention key-value projections dynamically modulate intermediate feature maps at each reverse timestep. Under prompt $y = 0$, attention weights guide the latent trajectory to form a single continuous elliptical loop; under $y = 3$, the model synthesizes two open curved lobes with a central cusp; under $y = 7$, probability mass concentrates into a prominent horizontal bar and descending diagonal stem. This demonstrates that LDM conditioning does not simply filter post-hoc samples, but deterministically dictates semantic trajectories from the very first denoising steps.
+ 
+-=== Empirical Benchmark: Pixel DDPM vs. Latent LDM
++=== Empirical Benchmark of Pixel-Space DDPM and LDM
+ 
+-Both models were trained and profiled under identical conditions: the same MNIST training split, noise schedule, batch size, epoch budget, random seed and GPU. The only structural difference is that the latent model requires an additional first-stage Spatial VAE (30 epochs, $beta_"KL" = 5 times 10^(-4)$), frozen before the diffusion stage begins.
++Both models were trained and profiled under matched conditions: the same MNIST training split, noise schedule, batch size, epoch budget (50 epochs), optimizer (AdamW, weight decay $10^(-4)$, cosine schedule to $10^(-5)$), random seed and GPU. Both diffusion stages use the same conditional U-Net architecture with the same conditioning mechanism; architecturally they differ only in the operating space and the number of input channels. Two differences remain and are stated explicitly: the latent U-Net uses an initial learning rate of $2.5 times 10^(-3)$ instead of $2 times 10^(-3)$, and because its input and output convolutions handle four latent channels instead of one image channel it has $181,540$ trainable parameters instead of $179,809$. The only additional component is that the latent model requires a first-stage spatial VAE (30 epochs, $beta_"KL" = 5 times 10^(-4)$), frozen before the diffusion stage begins.
++
++@tab:pixel-vs-latent reports compute as floating-point operations (FLOPs) per U-Net forward pass, memory as peak video memory (VRAM) allocated on the GPU, and wall-clock time for training and for a full 1,000-step reverse trajectory. For the cited models, the sampling row lists the number of steps of the Denoising Diffusion Implicit Models (DDIM) sampler used by @rombach2022ldm, a deterministic sampler that skips intermediate timesteps.
+ 
+ #figure(
+   kind: table,
+-  caption: [Empirical comparison of pixel-space DDPM and latent-space LDM under identical conditions. The first two columns are our own measurements; the last column reports values cited from @ho2020ddpm and @rombach2022ldm and was not reproduced in this work.],
++  caption: [Empirical comparison of pixel-space DDPM and latent-space LDM under matched training conditions. The first two columns are our own measurements; the last column reports values cited from @ho2020ddpm and @rombach2022ldm and was not reproduced in this work.],
+   {
+     set text(size: 8.4pt)
+     set par(justify: false, leading: 0.55em, spacing: 0.35em, first-line-indent: 0pt)
+@@ -67,27 +69,27 @@ Both models were trained and profiled under identical conditions: the same MNIST
+       [Operating space],
+       [$1 times 28 times 28 = 784$],
+       [$4 times 7 times 7 = 196$ ($f = 4$)],
+-      [196,608 → 16,384 (ImageNet 256)],
++      [$256^2 times 3 = 196,608$ → $64^2 times 3 = 12,288$ (LDM-4, ImageNet)],
+ 
+       [FLOPs per step],
+-      [117.87 M],
+-      [8.31 M (14.19$times$ fewer)],
+-      [$4 times$ to $16 times$ reduction],
++      [117.9 M],
++      [8.3 M (14.19$times$ fewer)],
++      [—],
+ 
+       [FLOPs per 1,000 steps],
+-      [117.87 G],
+-      [8.31 G],
++      [117.9 G],
++      [8.3 G],
+       [—],
+ 
+       [Peak VRAM],
+-      [230.64 MB],
+-      [37.61 MB (6.13$times$ lower)],
+-      [Cluster vs. single 24 GB GPU],
++      [230.6 MB],
++      [37.6 MB (6.13$times$ lower)],
++      [—],
+ 
+       [Time per epoch],
+       [9.42 s],
+       [5.74 s (1.64$times$)],
+-      [$2.5 times$ at $256 times 256$],
++      [—],
+ 
+       [Total training],
+       [471.2 s],
+@@ -97,12 +99,12 @@ Both models were trained and profiled under identical conditions: the same MNIST
+       [Sampling, 1,000 steps],
+       [1.592 s (628.2 steps/s)],
+       [1.715 s (583.2 steps/s)],
+-      [DDIM 20–50 steps],
++      [1,000 (DDPM) / 250 DDIM (LDM-4-G)],
+ 
+       [Parameters],
+       [179,809],
+-      [281,325 (incl. 99,785 VAE)],
+-      [35.7 M / 274 M],
++      [281,325 (181,540 U-Net + 99,785 VAE)],
++      [35.7 M (DDPM, CIFAR-10) / 400 M (LDM-4-G)],
+ 
+       [Final loss],
+       [$L_"simple"$ = 0.0210],
+@@ -117,12 +119,12 @@ Both models were trained and profiled under identical conditions: the same MNIST
+       [Sample PSNR],
+       [8.09 dB],
+       [6.66 dB],
+-      [FID 3.17 / 3.60],
++      [FID 3.17 (DDPM, CIFAR-10) / 3.60 (LDM-4-G, ImageNet)],
+ 
+       [Conditioning],
+-      [Additive embedding],
+-      [Cross-attention],
+-      [Text, layout, depth],
++      [Additive + cross-attention (shared U-Net)],
++      [Additive + cross-attention (shared U-Net)],
++      [Text, layout, semantic maps],
+ 
+       table.hline(stroke: 0.9pt),
+     )
+@@ -140,7 +142,7 @@ This advantage must be read against the cost of the first stage. Per epoch the l
+ 
+ The two objective values are not comparable across spaces. $L_"simple"$ = 0.0210 against $L_"LDM"$ = 0.1499 reflects that the great majority of MNIST coordinates are exactly zero, so most of the pixel-space target is trivial to predict, whereas the 196 latent coefficients carry the whole digit and thus have a higher variance. The higher latent loss is evidence for the entropy-packing argument of @rombach2022ldm, not a sign of underfitting.
+ 
+-Quality must likewise be read at two levels. The VAE reconstructs the canonical digit at 30.10 dB, so the compression stage is not the bottleneck of the system, whereas the sample-level PSNR of 8.09 dB and 6.66 dB measures the pixel-aligned agreement of one generated image with one reference image and is too weak a proxy to rank the two models. For distributional quality we therefore cite the published FID values, 3.17 for DDPM on CIFAR-10 @ho2020ddpm and 3.60 for LDM-4 on ImageNet @rombach2022ldm, which were not reproduced here. Finally, the conditioning interfaces differ in kind: the pixel model adds the class embedding to the time-embedding path, while the latent model routes it through cross-attention, the mechanism shown in @fig:exp-ldm-cond to steer one shared noise towards three distinct digits. That interface is what allows @rombach2022ldm to condition on text and layout, although our implementation exercises class tokens only.
++Quality must likewise be read at two levels. The VAE reconstructs the canonical digit at 30.10 dB, so the compression stage is not the bottleneck of the system, whereas the sample-level PSNR of 8.09 dB and 6.66 dB measures the pixel-aligned agreement of one generated image with one reference image and is too weak a proxy to rank the two models. For distributional quality we therefore cite the published FID values, 3.17 for DDPM on CIFAR-10 @ho2020ddpm and 3.60 for the class-conditional LDM-4-G (400 M parameters, classifier-free guidance) on ImageNet $256 times 256$ @rombach2022ldm, which were not reproduced here. Finally, conditioning is not a point of difference in our setup: both models share one U-Net in which the class embedding is added to the time-embedding path and is simultaneously injected through two cross-attention blocks, the mechanism shown in @fig:exp-ldm-cond to steer one shared noise towards three distinct digits. The measured gaps in @tab:pixel-vs-latent therefore stem from the operating space and the number of input channels, not from the conditioning interface. Cross-attention is what allows @rombach2022ldm to condition on text and layout, although our implementation exercises class tokens only.
+ 
+ == Critical Analysis and Limitations
+ 
+@@ -154,4 +156,4 @@ These limitations bound the conclusions. Our experiments use 28$times$28 images
+ 
+ Our experiments are trained exclusively on MNIST, released under a Creative Commons Attribution-ShareAlike licence; no web-scraped corpus, photograph or third-party artwork enters the pipeline, so the copyright exposure of the present study is minimal. Its limitations are nonetheless real: the corpus is demographically narrow, produced by a predominantly adult American population whose handwriting conventions differ markedly from other cultures, and audits report a small fraction of incorrect labels. A model trained on it inherits a narrow prior over stroke shape and orientation, visible in our samples as clean but stylistically uniform digits, so any claim of generalisable generation quality must be restricted to the MNIST domain.
+ 
+-The literature motivating this report is exposed to risks our setting avoids. The high-resolution latent diffusion models of @rombach2022ldm and their successors are trained on web-scraped image-text collections of billions of pairs in which copyrighted artworks and identifiable persons appear unfiltered, which raises a copyright problem, since near-verbatim training images can be extracted from a trained generator; a style problem, since the manner of an identifiable artist can be reproduced without copying any image exactly, leaving attribution and consent unresolved; and a bias problem, since these corpora over-represent the English-speaking and affluent parts of the internet, an asymmetry that cross-attention can even steer deliberately. Countermeasures include deduplication and opt-out lists, provenance metadata such as C2PA, and auditing outputs for memorised content.
++The literature motivating this report is exposed to risks our setting avoids. The high-resolution latent diffusion models of @rombach2022ldm and their successors are trained on web-scraped image-text collections of billions of pairs in which copyrighted artworks and identifiable persons appear unfiltered, which raises a copyright problem, since near-verbatim training images can be extracted from a trained generator; a style problem, since the manner of an identifiable artist can be reproduced without copying any image exactly, leaving attribution and consent unresolved; and a bias problem, since these corpora over-represent the English-speaking and affluent parts of the internet, an asymmetry that cross-attention can even steer deliberately. Countermeasures include deduplication and opt-out lists, provenance metadata such as the Coalition for Content Provenance and Authenticity (C2PA) standard, and auditing outputs for memorised content.
+diff --git a/typst/sections/title-and-abstract.typ b/typst/sections/title-and-abstract.typ
+index 2fb7843..163e683 100644
+--- a/typst/sections/title-and-abstract.typ
++++ b/typst/sections/title-and-abstract.typ
+@@ -19,15 +19,15 @@
+       columns: (1fr, 1fr, 1fr),
+       gutter: 12pt,
+       [
+-        *Thanh Huu Nguyen* \
++        Thanh Huu Nguyen \
+         #text(size: 9pt, fill: luma(80))[Student ID: 24125030]
+       ],
+       [
+-        *Manh Cuong Do* \
++        Manh Cuong Do \
+         #text(size: 9pt, fill: luma(80))[Student ID: 24125054]
+       ],
+       [
+-        *Thi Thanh Huyen Phan* \
++        Thi Thanh Huyen Phan \
+         #text(size: 9pt, fill: luma(80))[Student ID: 24125031]
+       ],
+     )
+@@ -46,7 +46,7 @@
+     #set text(size: 9.5pt)
+     #v(4pt)
+     #text(size: 9.2pt)[
+-      *Index Terms*—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
++      Index Terms—Generative AI, Denoising Diffusion Probabilistic Models (DDPM), Latent Diffusion Models (LDM), Variational Autoencoder, Cross-Attention.
+     ]
+   ]
+ 
