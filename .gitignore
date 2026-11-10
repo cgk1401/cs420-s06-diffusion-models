@@ -7,9 +7,3 @@ __pycache__/
 
 .vscode/
 .venv*
-
-
-fig_speed_flops_comparison.pdf
-fig_speed_flops_comparison.png
-step4_compare_benchmark.py
-pixel_vs_latent_benchmark.md
