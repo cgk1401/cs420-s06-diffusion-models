@@ -90,7 +90,7 @@ def get_training_dataloader(batch_size: int = 64, max_samples: int | None = None
 
 
 def train_and_evaluate_pixel_ddpm(
-    epochs: int = 20,
+    epochs: int = 50,
     batch_size: int = 64,
     max_samples: int | None = getattr(config, "TRAIN_MAX_SAMPLES", None),
     device: str | torch.device | None = None,
@@ -336,7 +336,7 @@ def train_and_evaluate_pixel_ddpm(
 
 def main():
     parser = argparse.ArgumentParser(description="Train Pixel-Space DDPM on MNIST")
-    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs (default: 20)")
+    parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs (default: 50)")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size (default: 64)")
     parser.add_argument("--samples", type=int, default=None, help="Max training samples (e.g. 2000, 5000, or None for full 60,000)")
     parser.add_argument("--full", action="store_true", help="Force train on FULL 60,000 MNIST dataset")
