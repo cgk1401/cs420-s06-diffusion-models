@@ -50,6 +50,4 @@
     ]
   ]
 
-  #v(10pt)
-  #line(length: 100%, stroke: 0.5pt + luma(180))
 ]

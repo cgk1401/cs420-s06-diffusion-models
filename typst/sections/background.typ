@@ -20,48 +20,48 @@ Table @tab:gen-comparison summarizes the main differences between these generati
 
 #figure(
   kind: table,
-  caption: [Qualitative comparison of major generative modeling families, synthesized from @goodfellow2014gan, @kingma2014vae, @sohl2015deep, and @ho2020ddpm. The comparison does not represent a direct experimental benchmark.],
+  caption: [Qualitative comparison of major generative modeling families, synthesized from @goodfellow2014gan, @kingma2014vae, @sohl2015deep, and @ho2020ddpm. The comparison summarizes the characteristics discussed in Section 2.2.],
   {
-    set text(size: 9.2pt)
+    set text(size: 8.8pt)
     table(
-      columns: (1.3fr, 1.1fr, 1.2fr, 1.1fr, 1.3fr),
+      columns: (1.25fr, 1.1fr, 1.1fr, 1.1fr, 1.25fr),
       align: (left, left, left, left, left),
       stroke: none,
-      inset: (x: 6pt, y: 5pt),
+      inset: (x: 5pt, y: 5.5pt),
 
       table.hline(stroke: 0.9pt),
-      [Criterion], [GANs], [Autoregressive], [VAEs], [Diffusion Models],
+      [*Criterion*], [*GANs*], [*Autoregressive*], [*VAEs*], [*Diffusion Models*],
       table.hline(stroke: 0.5pt),
 
       [Core Principle],
-      [Adversarial training between generator and discriminator],
-      [Sequential generation based on previous components],
-      [Learning an encoder, latent distribution, and decoder],
-      [Learning iterative denoising across multiple steps],
+      [Adversarial \ #text(size: 7.3pt, fill: luma(90))[Generator vs. discriminator]],
+      [Sequential \ #text(size: 7.3pt, fill: luma(90))[Conditional step-by-step]],
+      [Autoencoding \ #text(size: 7.3pt, fill: luma(90))[Latent compress & decode]],
+      [Iterative Denoising \ #text(size: 7.3pt, fill: luma(90))[Multi-step noise removal]],
 
       [Sample Quality],
-      [Potentially very high],
-      [High, depending on the model],
-      [May produce less sharp images],
-      [Generally high, with detailed outputs],
+      [High \ #text(size: 7.3pt, fill: luma(90))[Sharp realistic images]],
+      [High \ #text(size: 7.3pt, fill: luma(90))[High-fidelity components]],
+      [Moderate \ #text(size: 7.3pt, fill: luma(90))[May look less sharp]],
+      [High \ #text(size: 7.3pt, fill: luma(90))[Detailed and fine outputs]],
 
       [Training Stability],
-      [May suffer from adversarial instability],
-      [Generally stable],
-      [Generally stable],
-      [Generally more stable than GANs],
+      [Unstable \ #text(size: 7.3pt, fill: luma(90))[Adversarial dynamics]],
+      [Stable \ #text(size: 7.3pt, fill: luma(90))[Direct probabilistic loss]],
+      [Stable \ #text(size: 7.3pt, fill: luma(90))[Consistent optimization]],
+      [Stable \ #text(size: 7.3pt, fill: luma(90))[No adversarial training]],
 
       [Mode Coverage],
-      [Risk of mode collapse],
-      [Often good, depending on the model],
-      [Depends on the prior and decoder],
-      [Often good, but data-dependent],
+      [Limited \ #text(size: 7.3pt, fill: luma(90))[Risk of mode collapse]],
+      [High \ #text(size: 7.3pt, fill: luma(90))[Broad data coverage]],
+      [High \ #text(size: 7.3pt, fill: luma(90))[Smooth latent prior]],
+      [High \ #text(size: 7.3pt, fill: luma(90))[Diverse sample output]],
 
       [Sampling Speed],
-      [Fast, typically one generator pass],
-      [Slow due to sequential generation],
-      [Generally fast through the decoder],
-      [Slow due to multiple denoising steps],
+      [Fast \ #text(size: 7.3pt, fill: luma(90))[Single generator pass]],
+      [Slow \ #text(size: 7.3pt, fill: luma(90))[Sequential generation]],
+      [Fast \ #text(size: 7.3pt, fill: luma(90))[Single decoder pass]],
+      [Slow \ #text(size: 7.3pt, fill: luma(90))[Many denoising steps]],
 
       table.hline(stroke: 0.9pt),
     )

@@ -12,7 +12,33 @@
 
 === Theoretical Framework & Modeling Assumptions
 
-Denoising Diffusion Probabilistic Models (DDPM) define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free *forward diffusion process* that systematically degrades data into isotropic Gaussian noise, and a parameterized *reverse process* that learns to invert this degradation to synthesize novel samples.
+DDPM define a class of latent variable models inspired by nonequilibrium thermodynamics. The generative mechanism consists of two opposing Markov chains operating over a high-dimensional continuous space $bb(R)^D$: a parameter-free forward diffusion process that systematically degrades data into isotropic Gaussian noise, and a parameterized reverse process that learns to invert this degradation to synthesize novel samples. The principal mathematical notations, parameter definitions, and variable ranges used throughout this framework are summarized in @tab:symbols.
+
+#figure(
+  kind: table,
+  caption: [Symbol definitions, value ranges, and roles in the DDPM framework.],
+  {
+    set text(size: 9.2pt)
+    table(
+      columns: (0.9fr, 2.2fr, 1.3fr),
+      align: (left, left, left),
+      stroke: none,
+      inset: (x: 6pt, y: 5pt),
+      table.hline(stroke: 0.9pt),
+      [*Symbol*], [*Definition & Role*], [*Range / Units*],
+      table.hline(stroke: 0.5pt),
+      [$x_0$], [Clean normalized input data], [$[-1, 1]^D$],
+      [$x_t, x_(t-1)$], [Noisy latent states at timesteps $t, t-1$], [$bb(R)^D$],
+      [$t, T$], [Discrete diffusion timestep and total steps], [$t in {1, ..., T}, T = 1000$],
+      [$beta_t$], [Variance schedule hyperparameter at step $t$], [$beta_t in (10^(-4), 0.02)$],
+      [$alpha_t, overline(alpha)_t$], [Signal scaling coefficients ($alpha_t = 1 - beta_t$, $overline(alpha)_t = product_(s=1)^t alpha_s$)], [$(0, 1)$],
+      [$bold(I)$], [Identity covariance matrix], [$bb(R)^(D times D)$],
+      [$epsilon$], [Standard isotropic Gaussian noise], [$epsilon ~ cal(N)(bold(0), bold(I))$],
+      [$epsilon_theta (x_t, t)$], [Parameterized neural noise predictor (U-Net)], [$bb(R)^D$],
+      table.hline(stroke: 0.9pt),
+    )
+  },
+) <tab:symbols>
 
 === Data Scaling & Preprocessing Assumptions
 
@@ -24,7 +50,7 @@ This normalization ensures that the input signal $x_0$ is centered at zero with 
 
 === Forward Process & $beta$ Schedule
 
-The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to a variance schedule $beta_1, ..., beta_T$:
+The forward diffusion process $q(x_(1:T) | x_0)$ is defined as a fixed Markov chain that progressively corrupts data by adding small amounts of Gaussian noise at each discrete timestep $t in {1, ..., T}$ according to the variance schedule $beta_1, ..., beta_T$ (summarized in @tab:symbols):
 
 $ q(x_(1:T) | x_0) = product_(t=1)^T q(x_t | x_(t-1)), quad q(x_t | x_(t-1)) = cal(N)(x_t; sqrt(1 - beta_t) x_(t-1), beta_t bold(I)) $ <eq:forward>
 
@@ -60,28 +86,7 @@ This reparameterization simplifies the variational lower bound (ELBO) into an un
 
 $ L_"simple" = bb(E)_(t, x_0, epsilon) [ norm(epsilon - epsilon_theta (x_t, t))^2 ] $ <eq:lsimple>
 
-#figure(
-  caption: [Symbol definitions, value ranges, and roles in @eq:forward and @eq:lsimple (Section III).],
-)[
-  #set text(size: 9.2pt)
-  #table(
-    columns: (0.9fr, 2.2fr, 1.3fr),
-    align: (left, left, left),
-    stroke: none,
-    inset: (x: 6pt, y: 5pt),
-    table.hline(stroke: 0.9pt),
-    [*Symbol*], [*Definition & Role*], [*Range / Units*],
-    table.hline(stroke: 0.5pt),
-    [$x_0$], [[Define clean normalized data]], [[e.g., $[-1, 1]^D$]],
-    [$x_t, x_(t-1)$], [[Define noisy states at $t, t-1$]], [[e.g., $bb(R)^D$]],
-    [$t, T$], [[Define discrete timestep and total steps]], [[e.g., $t in {1, ..., T}$]],
-    [$beta_t$], [[Define variance schedule at step $t$]], [[e.g., $beta_t in (0, 1)$]],
-    [$bold(I)$], [[Define identity covariance matrix]], [[$bb(R)^(D times D)$]],
-    [$epsilon$], [[Define standard Gaussian noise]], [[$epsilon ~ cal(N)(bold(0), bold(I))$]],
-    [$epsilon_theta (x_t, t)$], [[Define neural noise predictor]], [[$bb(R)^D$]],
-    table.hline(stroke: 0.9pt),
-  )
-] <tab:symbols>
+The overall transitions of the forward noising and reverse denoising Markov chains are illustrated in @fig:ddpm-chain.
 
 == Step-by-Step Worked Numerical Example
 
