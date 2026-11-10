@@ -119,7 +119,7 @@ $ L_"simple"^(t=1) = frac(1, 784) sum_(r=1)^(28) sum_(c=1)^(28) (epsilon_(r, c) 
 
 The single-pixel error is one contribution to this image-level mean, while training minimizes the corresponding noise-prediction error over sampled images, timesteps, and noise vectors
 
-== Latent Diffusion Models (LDM)
+== Latent Diffusion Models (LDM) <sec:ldm>
 
 
 
@@ -127,11 +127,11 @@ To overcome the severe computational bottlenecks of pixel-space diffusion models
 
 An autoencoder maps an RGB image $x in bb(R)^(H times W times 3)$ into a lower-dimensional latent representation $z in bb(R)^(h times w times c)$ with its encoder $cal(E)$
 
-$ z = cal(E)(x) $
+$ z = cal(E)(x) $ <eq:vae-enc>
 
 The spatial downsampling factor is $f = H / h = W / w = 2^m$, where $m in bb(N)$ and LDM considers factors $f in \{1, 2, 4, 8, 16, 32\}$; for instance, with $f = 8$, an image of size $256 times 256 times 3$ becomes a latent tensor of size $32 times 32 times 4$, reducing computation while retaining important structural information, and a decoder maps the denoised latent $z_0$ back to image space
 
-$ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $
+$ tilde(x) = cal(D)(z_0) = cal(D)(cal(E)(x)) $ <eq:vae-dec>
 
 To keep the latent representation useful for reconstruction, the autoencoder can use KL regularization toward a standard normal distribution or vector quantization as in VQ-GAN, alongside perceptual losses such as LPIPS and patch-based adversarial losses
 

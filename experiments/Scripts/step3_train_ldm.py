@@ -378,16 +378,16 @@ def train_and_evaluate_ldm(
     # Pixel Input -> VAE latent (true 1/16 area on white canvas) -> Decoded output
     # -------------------------------------------------------------------------
     print("[Stage 3: Rendering] Building 1-row Figure 3 (VAE Compression + Reconstruction)...")
-    fig3, axes3 = plt.subplots(1, 3, figsize=(9.5, 3.4))
+    fig3, axes3 = plt.subplots(1, 3, figsize=(7.6, 2.7))
 
     z0_raw_vis = latent_to_vis(z0_scaled[0])
     z0_scaled_canvas = make_scaled_latent_canvas(z0_raw_vis)
     x0_ldm_01 = unscale_to_0_1(x0_ldm_decoded[0, 0].cpu())
 
     row1_data = [
-        (x0_01, "Pixel Input $x_0$\n($28\\times 28$)", "gray"),
-        (z0_scaled_canvas, "Latent $z_0 = \\mathcal{E}(x_0)$\n($7\\times 7$, $\\mathbf{16\\times}$ Smaller Area)", "viridis"),
-        (x0_vae_01, f"Decoded $\\tilde{{x}} = \\mathcal{{D}}(z_0)$\n($28\\times 28$, PSNR {vae_psnr:.1f} dB)", "gray"),
+        (x0_01, "Input $x_0$\n($28\\times 28$)", "gray"),
+        (z0_scaled_canvas, "Latent $z_0 = \\mathcal{E}(x_0)$\n($7\\times 7$, $1/16$ area)", "viridis"),
+        (x0_vae_01, "Decoded $\\tilde{x} = \\mathcal{D}(z_0)$\n($28\\times 28$)", "gray"),
     ]
 
     for col, (arr, title, cmap_name) in enumerate(row1_data):
@@ -446,7 +446,7 @@ def train_and_evaluate_ldm(
     with torch.no_grad():
         x_cond_decoded = vae.decode(z_cond_gen / latent_scale)
 
-    fig4, axes4 = plt.subplots(1, 5, figsize=(11.8, 2.7), gridspec_kw={"width_ratios": [1.0, 0.55, 1.0, 1.0, 1.0]})
+    fig4, axes4 = plt.subplots(1, 5, figsize=(8.0, 2.4), gridspec_kw={"width_ratios": [1.0, 0.55, 1.0, 1.0, 1.0]})
 
     # Panel 0: Shared initial noise (7x7 latent shown at its true 1/16 area on white canvas)
     shared_noise_vis = latent_to_vis(shared_z_T[0])
@@ -459,7 +459,7 @@ def train_and_evaluate_ldm(
         vmax=1.0,
         interpolation="nearest",
     )
-    axes4[0].set_title("Shared Initial Noise\n$z_{1000} \\sim \\mathcal{N}(0, I)$ ($7\\times 7$)", fontsize=9.2)
+    axes4[0].set_title("Initial Noise\n$z_{1000}$ ($7\\times 7$)", fontsize=10.5)
     axes4[0].set_xticks([])
     axes4[0].set_yticks([])
     for sp in axes4[0].spines.values():
@@ -468,9 +468,9 @@ def train_and_evaluate_ldm(
     # Panel 1: Cross-Attention text indicator
     axes4[1].axis("off")
     axes4[1].annotate(
-        "Cross-Attention\n$\\tau_\\theta(y)$\n$\\longrightarrow$\nPrompt Control",
+        "Cross-Attention\n$\\tau_\\theta(y)$\n$\\longrightarrow$\nPrompt",
         xy=(0.5, 0.5), xycoords="axes fraction",
-        ha="center", va="center", fontsize=9.2, fontweight="bold", color="#0f766e"
+        ha="center", va="center", fontsize=10.5, fontweight="bold", color="#0f766e"
     )
 
     # Panels 2, 3, 4: Conditioned digits 0, 3, 7
@@ -478,7 +478,7 @@ def train_and_evaluate_ldm(
         ax = axes4[idx + 2]
         img_d = unscale_to_0_1(x_cond_decoded[idx, 0].cpu())
         ax.imshow(img_d, cmap="gray", vmin=0.0, vmax=1.0, interpolation="nearest")
-        ax.set_title(f"Condition $y = \\text{{'{d_lbl}'}}$\n($28\\times 28$ Synthesized)", fontsize=9.2)
+        ax.set_title(f"$y = \\text{{'{d_lbl}'}}$\n($28\\times 28$)", fontsize=10.5)
         ax.set_xticks([])
         ax.set_yticks([])
         for sp in ax.spines.values():
